@@ -40,8 +40,7 @@ export default function Home() {
         {error && <p className="error-text">{error}</p>}
 
         <p className="disclaimer-text">
-          Credify provides estimated risk indicators. Results may not be fully
-          accurate. Verify independently.
+         This tool provides informational risk indicators based on publicly available data and heuristic analysis. Results are estimates and may not be complete or fully accurate. This analysis should not be considered professional, legal, or security advice. Users are responsible for independently verifying job postings and making their own decisions before taking any action.
         </p>
 
         <section className="features-grid">
