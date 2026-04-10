@@ -1,0 +1,737 @@
+/* Layout */
+
+.page-center {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 10vh 20px 40px;
+}
+
+.container-sm {
+  width: 100%;
+  max-width: 700px;
+}
+
+/* Hero */
+
+.hero-title {
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.hero-subtitle {
+  text-align: center;
+  color: #64748b;
+  font-size: 15px;
+  margin-bottom: 28px;
+}
+
+/* Messages */
+
+.error-text {
+  margin-top: 10px;
+  color: #dc2626;
+  font-size: 13px;
+  text-align: center;
+}
+
+.disclaimer-text {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* Feature cards */
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+/* Sizes */
+
+.badge-sm {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.badge-md {
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+/* Risk levels */
+
+.badge-low {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+.badge-medium {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+.badge-high {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+/* Base container */
+
+.progress {
+  width: 100%;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Fill */
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+/* Variants */
+
+.progress-default .progress-fill {
+  background: #3b82f6;
+}
+
+.progress-success .progress-fill {
+  background: #22c55e;
+}
+
+.progress-warning .progress-fill {
+  background: #f59e0b;
+}
+
+.progress-danger .progress-fill {
+  background: #ef4444;
+}
+/* Page */
+
+.results-page {
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+
+/* Nav */
+
+.results-nav {
+  background: #fff;
+  border-bottom: 1px solid #e8edf2;
+  padding: 0 24px;
+  height: 56px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-back {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  color: #64748b;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.nav-host {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* Layout */
+
+.results-layout {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Sidebar */
+
+.results-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  position: sticky;
+  top: 72px;
+}
+
+/* Main */
+
+.results-main {
+  width: 100%;
+}
+
+.insight-header {
+  margin-bottom: 20px;
+}
+
+.insight-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.insight-header p {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Score Panel */
+
+.score-panel {
+  border: 1px solid #e8edf2;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+/* Header */
+
+.score-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+}
+
+/* Score */
+
+.score-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.score-number {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-max {
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+.score-label {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Risk Variants */
+
+.score-low {
+  background: #f0fdf8;
+  color: #15803d;
+}
+
+.score-medium {
+  background: #fffdf0;
+  color: #b45309;
+}
+
+.score-high {
+  background: #fef9f9;
+  color: #b91c1c;
+}
+
+/* Key Signals Panel */
+
+.signals-panel {
+  background: #fff;
+  border: 1px solid #e8edf2;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.signals-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 12px;
+}
+
+/* List */
+
+.signals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Signal Item */
+
+.signal-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid;
+
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Risk Variants */
+
+.signal-low {
+  background: #f0fdf8;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.signal-medium {
+  background: #fffdf0;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.signal-high {
+  background: #fef9f9;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+/* icon inherits color */
+
+.signal-item svg {
+  stroke: currentColor;
+}
+
+/* SIGNAL ROW CARD */
+
+.signal-row {
+  background: #fff;
+  border: 1px solid #e8edf2;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* HEADER */
+
+.signal-row-header {
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+
+  padding: 14px 16px;
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+
+  text-align: left;
+}
+
+/* ICON */
+
+.signal-row-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f1f5f9;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #64748b;
+}
+
+/* MAIN CONTENT */
+
+.signal-row-main {
+  display: flex;
+  flex-direction: column;
+}
+
+/* TITLE */
+
+.signal-row-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+/* META */
+
+.signal-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 13px;
+  color: #475569;
+}
+
+.signal-confidence {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* EXPLANATION */
+
+.signal-row-explanation {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+
+/* CHEVRON */
+
+.signal-row-chevron {
+  color: #94a3b8;
+  transition: transform 0.2s;
+  margin-top: 2px;
+}
+
+.signal-row-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* BODY */
+
+.signal-row-body {
+  border-top: 1px solid #f1f5f9;
+
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* SECTIONS */
+
+.signal-section-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.signal-section-text {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+/* ADVICE BOX */
+
+.signal-advice {
+  background: #fef9f9;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.signal-tips {
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  font-size: 13px;
+  color: #475569;
+}
+
+/* EXAMPLE */
+
+.signal-example-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.signal-example {
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* RELIABILITY */
+
+.signal-reliability {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+
+  font-size: 12px;
+}
+
+.signal-reliability span:first-child {
+  color: #94a3b8;
+}
+
+.signal-reliability span:last-child {
+  color: #475569;
+  font-weight: 500;
+}
+
+/* SAFE CHECKLIST */
+
+.safe-checklist {
+  background: #fff;
+  border: 1px solid #e8edf2;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+/* HEADER */
+
+.safe-checklist-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 14px;
+
+  color: #2563eb;
+}
+
+.safe-checklist-title {
+  font-weight: 500;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+/* LIST */
+
+.safe-checklist-list {
+  list-style: none;
+  padding-left: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ITEM */
+
+.safe-checklist-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+/* NUMBER CIRCLE */
+
+.safe-checklist-number {
+  min-width: 20px;
+  height: 20px;
+
+  border-radius: 50%;
+
+  background: #eff6ff;
+  color: #2563eb;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* TEXT */
+
+.safe-checklist-text {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.55;
+}
+
+/* URL INPUT BAR */
+
+.url-input-bar {
+  display: flex;
+  align-items: center;
+
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+
+  padding: 6px 6px 6px 16px;
+  gap: 8px;
+
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* SEARCH ICON */
+
+.url-input-icon {
+  color: #94a3b8;
+}
+
+/* INPUT */
+
+.url-input-field {
+  flex: 1;
+
+  border: none;
+  outline: none;
+
+  font-size: 15px;
+  color: #1a1a1a;
+
+  background: transparent;
+}
+
+/* BUTTON */
+
+.url-input-button {
+  background: #2563eb;
+  color: #fff;
+
+  border: none;
+  border-radius: 8px;
+
+  padding: 10px 22px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+  transition: background 0.15s;
+
+  white-space: nowrap;
+}
+
+.url-input-button:hover {
+  background: #1d4ed8;
+}
+
+/* DISABLED */
+
+.url-input-button.disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+
+/* FEATURE CARD */
+
+.feature-card {
+  background: #fff;
+  border: 1px solid #e8edf2;
+  border-radius: 12px;
+  padding: 20px 20px 18px;
+}
+
+/* ICON */
+
+.feature-card-icon {
+  margin-bottom: 10px;
+  color: #4f46e5;
+}
+
+/* TITLE */
+
+.feature-card-title {
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #1a1a1a;
+}
+
+/* DESCRIPTION */
+
+.feature-card-description {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/*risk chip*/
+.chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.chip-green {
+  background-color: #e6f7ee;
+  color: #1f7a4c;
+}
+
+.chip-yellow {
+  background-color: #fff6e5;
+  color: #b7791f;
+}
+
+.chip-red {
+  background-color: #fdecea;
+  color: #c53030;
+}
