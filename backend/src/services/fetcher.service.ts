@@ -4,7 +4,6 @@ import { AppError } from "../types/AppError";
 import { isKnownJobPlatform } from "../utils/urlAllowlist";
 
 const axiosInstance = axios.create({
-  timeout: 8000,
   maxRedirects: 5,
   headers: {
     "User-Agent":
@@ -21,13 +20,15 @@ const axiosInstance = axios.create({
   },
 });
 
+const FETCH_TIMEOUT_MS = 8000;
+
 export async function fetchJobPage(sanitizedHref: string): Promise<string> {
   const hostname = new URL(sanitizedHref).hostname;
-
   await ssrfGuard(hostname);
 
-  const controller = new AbortController();
   const isKnownPlatform = isKnownJobPlatform(hostname);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
     const response = await axiosInstance.get<string>(sanitizedHref, {
@@ -36,20 +37,16 @@ export async function fetchJobPage(sanitizedHref: string): Promise<string> {
       signal: controller.signal,
     });
 
+    clearTimeout(timer);
     const status = response.status;
+    const body: string = response.data ?? "";
+
     if (status === 401 || status === 403) {
-      if (isKnownPlatform) {
-        if (response.data && response.data.trim().length > 0) {
-          return response.data;
-        }
-        throw new AppError(
-          `${hostname} blocks automated access. Try copying the job description text and analyzing it directly, or use the platform's official app.`,
-          400,
-          "FETCH_PLATFORM_BLOCKED"
-        );
+      if (isKnownPlatform && body.trim().length > 200) {
+        return body;
       }
       throw new AppError(
-        "Access to this URL is forbidden. The site may block automated requests.",
+        `This site (${hostname}) blocks automated access. Try pasting the job description text directly instead of the URL.`,
         400,
         "FETCH_FORBIDDEN"
       );
@@ -57,7 +54,7 @@ export async function fetchJobPage(sanitizedHref: string): Promise<string> {
 
     if (status === 404) {
       throw new AppError(
-        "The job posting URL returned a 404 — the page may have been removed or the link may be expired.",
+        "The job posting URL returned a 404 — the listing may have been removed or the link may be expired.",
         400,
         "FETCH_NOT_FOUND"
       );
@@ -65,7 +62,7 @@ export async function fetchJobPage(sanitizedHref: string): Promise<string> {
 
     if (status === 429) {
       throw new AppError(
-        "The job posting site is rate limiting requests. Please try again in a few minutes.",
+        "The job posting site is rate-limiting requests. Please try again in a few minutes.",
         429,
         "FETCH_RATE_LIMITED"
       );
@@ -73,34 +70,41 @@ export async function fetchJobPage(sanitizedHref: string): Promise<string> {
 
     if (status >= 500) {
       throw new AppError(
-        "The target site returned a server error while fetching the page.",
+        "The target site returned a server error. Please try again later.",
         502,
-        "FETCH_FAILED"
+        "FETCH_TARGET_SERVER_ERROR"
       );
     }
 
-    const contentType = response.headers["content-type"] ?? "";
-    if (!/text\/html|application\/xhtml/i.test(contentType)) {
+    const contentType = (response.headers["content-type"] ?? "").toLowerCase();
+    if (contentType && !contentType.includes("text/html") && !contentType.includes("application/xhtml")) {
       throw new AppError(
-        `URL did not return an HTML page (received: ${contentType})`,
+        `URL did not return an HTML page (received: ${contentType}). Make sure this is a direct link to a job listing.`,
         400,
         "INVALID_CONTENT_TYPE"
       );
     }
 
-    if (!response.data || response.data.trim().length === 0) {
-      throw new AppError("The fetched page is empty.", 400, "EMPTY_PAGE");
+    if (body.trim().length === 0) {
+      throw new AppError(
+        "The fetched page is empty.",
+        400,
+        "EMPTY_PAGE"
+      );
     }
 
-    return response.data;
+    return body;
+
   } catch (err) {
+    clearTimeout(timer);
+
     if (err instanceof AppError) throw err;
 
-    if (axios.isCancel(err)) {
+    if (axios.isCancel(err) || (err instanceof Error && err.name === "AbortError")) {
       throw new AppError(
-        "The request was cancelled due to server timeout.",
-        503,
-        "FETCH_CANCELLED"
+        "The request to the job posting URL timed out. The site may be slow or blocking requests.",
+        504,
+        "FETCH_TIMEOUT"
       );
     }
 
@@ -113,6 +117,13 @@ export async function fetchJobPage(sanitizedHref: string): Promise<string> {
           "FETCH_TIMEOUT"
         );
       }
+      if (axiosErr.code === "ENOTFOUND") {
+        throw new AppError(
+          `Could not reach ${hostname}. Check that the URL is correct and the site is accessible.`,
+          400,
+          "FETCH_DNS_FAILED"
+        );
+      }
       throw new AppError(
         `Failed to fetch job posting: ${axiosErr.message}`,
         502,
@@ -122,7 +133,7 @@ export async function fetchJobPage(sanitizedHref: string): Promise<string> {
 
     const message = err instanceof Error ? err.message : String(err);
     throw new AppError(
-      `Unexpected error occurred while fetching the URL: ${message}`,
+      `Unexpected error while fetching the URL: ${message}`,
       500,
       "FETCH_UNKNOWN"
     );
