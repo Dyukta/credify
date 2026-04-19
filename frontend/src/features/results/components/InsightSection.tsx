@@ -1,45 +1,26 @@
 import type { Signal } from "../../../types/Signal";
 import SignalRow from "./SignalRow";
-
-import {
-  AlertTriangle,
-  Globe,
-  History,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertTriangle, Globe, History, ShieldCheck } from "lucide-react";
 
 interface Props {
   category:
     | "red_flags"
     | "domain_company"
+    | "domain_info"
     | "historical"
     | "positive";
   signals: Signal[];
 }
 
 const sectionMeta = {
-  red_flags: {
-    label: "Red Flags",
-    icon: AlertTriangle,
-  },
-  domain_company: {
-    label: "Domain & Company Info",
-    icon: Globe,
-  },
-  historical: {
-    label: "Historical Patterns",
-    icon: History,
-  },
-  positive: {
-    label: "Positive Signals",
-    icon: ShieldCheck,
-  },
+  red_flags: { label: "Red Flags", icon: AlertTriangle },
+  domain_company: { label: "Domain & Company Info", icon: Globe },
+  domain_info: { label: "Domain & Company Info", icon: Globe },
+  historical: { label: "Historical Patterns", icon: History },
+  positive: { label: "Positive Signals", icon: ShieldCheck }
 };
 
-export default function InsightSection({
-  category,
-  signals,
-}: Props) {
+export default function InsightSection({ category, signals }: Props) {
   if (!signals.length) return null;
 
   const meta = sectionMeta[category];
@@ -50,7 +31,7 @@ export default function InsightSection({
       <div className="insight-section-header">
         <Icon size={15} />
         <span>{meta.label}</span>
-        <span>{signals.length}</span>
+        <span className="insight-section-count">{signals.length}</span>
       </div>
 
       <div className="insight-section-list">

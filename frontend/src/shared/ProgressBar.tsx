@@ -1,7 +1,7 @@
 interface Props {
-  value: number
-  height?: number
-  variant?: "default" | "success" | "warning" | "danger"
+  value: number;
+  height?: number;
+  variant?: "default" | "success" | "warning" | "danger";
 }
 
 export default function ProgressBar({
@@ -9,7 +9,7 @@ export default function ProgressBar({
   height = 6,
   variant = "default",
 }: Props) {
-  const safeValue = Math.min(100, Math.max(0, value))
+  const safeValue = Math.min(100, Math.max(0, value ?? 0));
 
   return (
     <div
@@ -20,10 +20,7 @@ export default function ProgressBar({
       aria-valuemin={0}
       aria-valuemax={100}
     >
-      <div
-        className="progress-fill"
-        style={{ width: `${safeValue}%` }}
-      />
+      <div className="progress-fill" style={{ width: `${safeValue}%` }} />
     </div>
-  )
+  );
 }

@@ -6,6 +6,7 @@ import type { Signal } from "../../../types/Signal";
 const CATEGORIES = [
   "red_flags",
   "domain_company",
+  "domain_info",
   "historical",
   "positive",
 ] as const;
@@ -20,6 +21,7 @@ export function useResultsView() {
     const initial: Record<Category, Signal[]> = {
       red_flags: [],
       domain_company: [],
+      domain_info: [],
       historical: [],
       positive: [],
     };
@@ -27,7 +29,11 @@ export function useResultsView() {
     if (!result) return initial;
 
     result.signals.forEach((signal) => {
-      initial[signal.category as Category].push(signal);
+      const key = signal.category as Category;
+ 
+      if (key in initial) {
+        initial[key].push(signal);
+      }
     });
 
     return initial;

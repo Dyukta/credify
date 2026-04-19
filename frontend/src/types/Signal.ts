@@ -3,17 +3,18 @@ import type { RiskLevel } from "./RiskLevel";
 export interface Signal {
   id: string;
   title: string;
-  description: string;
-
-  riskLevel: RiskLevel;
-
-  confidence: number;
-  category: "red_flags" | "domain_company" | "historical" | "positive";
-
-  value?: string;
-  explanation?: string;
+  explanation: string;
   whyItMatters?: string;
-  whatYouCanDo?: string[];
+  riskLevel: RiskLevel;
+  confidence: number;
+  category:
+    | "red_flags"
+    | "domain_company"
+    | "domain_info"
+    | "historical"
+    | "positive";
+  value?: string;
+  advice?: string[];
   example?: string;
-  icon?: string;
+  icon?: "email" | "document" | "clock" | "globe" | "star" | "history" | "building" | string;
 }

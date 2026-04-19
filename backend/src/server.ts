@@ -35,7 +35,7 @@ server.on('error', (err: NodeJS.ErrnoException) => {
 })
 
 function shutdown(signal: string) {
-  logger.info({ signal }, 'Graceful shutdown started')
+  logger.info({ signal }, 'shutdown started')
 
   server.close(() => {
     logger.info('Server closed')

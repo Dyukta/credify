@@ -1,26 +1,30 @@
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction } from "express";
 
-const TIMEOUT_MS = 10_000
+const TIMEOUT_MS = 10_000;
 
 export function requestTimeout(
   _req: Request,
   res: Response,
   next: NextFunction
 ): void {
+  const controller = new AbortController();
+  res.locals.abortController = controller;
+
   const timer = setTimeout(() => {
+    controller.abort();
+
     if (!res.headersSent) {
       res.status(503).json({
         status: 503,
-        message: 'Request timed out. The target URL took too long to respond.',
-        code: 'REQUEST_TIMEOUT',
-      })
+        message: "Request timed out. The target URL took too long to respond.",
+        code: "REQUEST_TIMEOUT",
+      });
     }
-  }, TIMEOUT_MS)
+  }, TIMEOUT_MS);
 
-  const clear = () => clearTimeout(timer)
+  const clear = () => clearTimeout(timer);
+  res.on("finish", clear);
+  res.on("close", clear);
 
-  res.on('finish', clear)
-  res.on('close', clear)
-
-  next()
+  next();
 }

@@ -2,11 +2,11 @@ import type { RiskLevel } from "../../../types/RiskLevel";
 import { AlertCircle } from "lucide-react";
 
 interface Props {
-  score: number;
+  riskScore: number;
   riskLevel: RiskLevel;
 }
 
-export default function ScorePanel({ score, riskLevel }: Props) {
+export default function ScorePanel({ riskScore, riskLevel }: Props) {
   return (
     <div className={`score-panel score-${riskLevel}`}>
       <div className="score-header">
@@ -15,7 +15,7 @@ export default function ScorePanel({ score, riskLevel }: Props) {
       </div>
 
       <div className="score-value">
-        <span className="score-number">{score}</span>
+        <span className="score-number">{riskScore}</span>
         <span className="score-max">/ 100</span>
       </div>
 

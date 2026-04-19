@@ -11,25 +11,26 @@ import {
   Star,
   History,
   ChevronDown,
-  Circle
+  Circle,
+  Building
 } from "lucide-react";
 
 interface Props {
   signal: Signal;
 }
 
-const signalIcon: Record<string, any> = {
+const signalIcon: Record<string, React.ComponentType<{ size?: number }>> = {
   email: Mail,
   document: FileText,
   clock: Clock,
   globe: Globe,
   star: Star,
   history: History,
+  building: Building,
 };
 
 export default function SignalRow({ signal }: Props) {
   const [open, setOpen] = useState(false);
-
   const Icon = signalIcon[signal.icon ?? ""] ?? Circle;
 
   return (
@@ -55,9 +56,7 @@ export default function SignalRow({ signal }: Props) {
             </span>
           </div>
 
-          <p className="signal-row-explanation">
-            {signal.description}
-          </p>
+          <p className="signal-row-explanation">{signal.explanation}</p>
         </div>
 
         <ChevronDown
@@ -68,22 +67,23 @@ export default function SignalRow({ signal }: Props) {
 
       {open && (
         <div className="signal-row-body">
-          <div>
-            <p className="signal-section-title">Why This Matters</p>
-            <p className="signal-section-text">
-              {signal.whyItMatters}
-            </p>
-          </div>
+          {signal.whyItMatters && (
+            <div>
+              <p className="signal-section-title">Why This Matters</p>
+              <p className="signal-section-text">{signal.whyItMatters}</p>
+            </div>
+          )}
 
-          <div className="signal-advice">
-            <p className="signal-section-title">What You Can Do</p>
-
-            <ol className="signal-tips">
-              {(signal.whatYouCanDo ?? []).map((tip, i) => (
-                <li key={i}>{tip}</li>
-              ))}
-            </ol>
-          </div>
+          {signal.advice && signal.advice.length > 0 && (
+            <div className="signal-advice">
+              <p className="signal-section-title">What You Can Do</p>
+              <ol className="signal-tips">
+                {signal.advice.map((tip, i) => (
+                  <li key={i}>{tip}</li>
+                ))}
+              </ol>
+            </div>
+          )}
 
           {signal.example && (
             <div>
@@ -92,7 +92,13 @@ export default function SignalRow({ signal }: Props) {
             </div>
           )}
 
-          <ProgressBar value={signal.confidence} height={4} />
+          <div>
+            <p className="signal-reliability">
+              <span>Signal Reliability</span>
+              <span>{signal.confidence}%</span>
+            </p>
+            <ProgressBar value={signal.confidence} height={4} />
+          </div>
         </div>
       )}
     </div>
