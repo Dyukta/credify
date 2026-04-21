@@ -3,19 +3,20 @@ import { ParsedJobPage } from "./parser.service";
 import { Signal, RiskLevel } from "../types/Signal";
 
 const SIGNAL_WEIGHTS: Record<string, number> = {
-  email_validity: 0.3,
-  content_quality: 0.3,
-  domain_age: 0.25,
-  repost_frequency: 0.15,
-  company_registration: 0.25,
+  content_quality:      0.30,
+  domain_age:           0.25,
+  job_title_realism:    0.20,
+  email_validity:       0.15,
+  repost_frequency:     0.10,
+  company_registration: 0.15,
 };
 
-const DEFAULT_WEIGHT = 0.2;
+const DEFAULT_WEIGHT = 0.10;
 
 const RISK_SCORE_MAP: Record<RiskLevel, number> = {
-  low: 10,
+  low:    10,
   medium: 55,
-  high: 90,
+  high:   90,
 };
 
 function clamp(num: number): number {

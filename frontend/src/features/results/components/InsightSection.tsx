@@ -1,6 +1,6 @@
 import type { Signal } from "../../../types/Signal";
 import SignalRow from "./SignalRow";
-import { AlertTriangle, Globe, History, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Globe, History, ShieldCheck, Briefcase } from "lucide-react";
 
 interface Props {
   category:
@@ -8,22 +8,27 @@ interface Props {
     | "domain_company"
     | "domain_info"
     | "historical"
-    | "positive";
+    | "positive"
+    | "job_title";
   signals: Signal[];
 }
 
-const sectionMeta = {
-  red_flags: { label: "Red Flags", icon: AlertTriangle },
-  domain_company: { label: "Domain & Company Info", icon: Globe },
-  domain_info: { label: "Domain & Company Info", icon: Globe },
-  historical: { label: "Historical Patterns", icon: History },
-  positive: { label: "Positive Signals", icon: ShieldCheck }
+const sectionMeta: Record<string, { label: string; icon: React.ElementType }> = {
+  red_flags:      { label: "Red Flags",             icon: AlertTriangle },
+  domain_company: { label: "Domain & Company Info", icon: Globe        },
+  domain_info:    { label: "Domain & Company Info", icon: Globe        },
+  historical:     { label: "Historical Patterns",   icon: History      },
+  positive:       { label: "Positive Signals",      icon: ShieldCheck  },
+  job_title:      { label: "Job Title Analysis",    icon: Briefcase    },
 };
 
 export default function InsightSection({ category, signals }: Props) {
   if (!signals.length) return null;
 
-  const meta = sectionMeta[category];
+  const meta = sectionMeta[category] ?? {
+    label: category.replace(/_/g, " "),
+    icon: Globe,
+  };
   const Icon = meta.icon;
 
   return (

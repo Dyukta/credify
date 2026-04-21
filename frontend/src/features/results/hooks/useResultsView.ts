@@ -9,6 +9,7 @@ const CATEGORIES = [
   "domain_info",
   "historical",
   "positive",
+  "job_title",
 ] as const;
 
 type Category = (typeof CATEGORIES)[number];
@@ -19,18 +20,18 @@ export function useResultsView() {
 
   const grouped = useMemo<Record<Category, Signal[]>>(() => {
     const initial: Record<Category, Signal[]> = {
-      red_flags: [],
+      red_flags:      [],
       domain_company: [],
-      domain_info: [],
-      historical: [],
-      positive: [],
+      domain_info:    [],
+      historical:     [],
+      positive:       [],
+      job_title:      [],
     };
 
     if (!result) return initial;
 
     result.signals.forEach((signal) => {
       const key = signal.category as Category;
- 
       if (key in initial) {
         initial[key].push(signal);
       }

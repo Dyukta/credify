@@ -10,10 +10,15 @@ export async function analyzeJobPosting(
 ): Promise<AnalysisResult> {
   const sanitized = sanitizeUrl(rawUrl);
   const html = await fetchJobPage(sanitized.href);
-  const parsed = parseJobPage(html, sanitized.href);
+  const parsed = await parseJobPage(html, sanitized.href);
   const scoringResult = await scoreSignals(parsed);
   const riskLevel = resolveRiskLevel(scoringResult.riskScore);
   const domain = sanitized.hostname.replace(/^www\./, "");
 
-  return buildAnalysisResult({ url: sanitized.href, domain, scoringResult, riskLevel });
+  return buildAnalysisResult({
+    url: sanitized.href,
+    domain,
+    scoringResult,
+    riskLevel,
+  });
 }

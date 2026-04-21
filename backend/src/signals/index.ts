@@ -5,6 +5,7 @@ import { emailValiditySignal } from "./emailValidity.signal";
 import { contentQualitySignal } from "./contentQuality.signal";
 import { repostFrequencySignal } from "./repostFrequency.signal";
 import { companyRegistrationSignal } from "./companyRegistration.signal";
+import { jobTitleRealismSignal } from "./jobTitleRealism.signal";
 
 export type SignalFn = (data: ParsedJobPage) => Signal | Promise<Signal>;
 
@@ -14,4 +15,5 @@ export const allSignals: SignalFn[] = [
   contentQualitySignal,
   repostFrequencySignal,
   companyRegistrationSignal,
+  jobTitleRealismSignal,
 ];

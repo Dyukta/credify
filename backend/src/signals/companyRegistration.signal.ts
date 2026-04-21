@@ -2,42 +2,50 @@ import axios from "axios";
 import { Signal } from "../types/Signal";
 import { ParsedJobPage } from "../services/parser.service";
 
-const SEARCH_TIMEOUT_MS = 5000;
+const REQUEST_TIMEOUT_MS = 5000;
 
-interface ZaubacorpResult {
-  company_name: string;
-  cin: string;
-  status: string;
-  date_of_incorporation: string;
-  company_category: string;
+interface WebPresenceResult {
+  resolves: boolean;
+  isJobBoard: boolean;
+  statusCode: number | null;
 }
 
-function domainToCompanyName(domain: string): string {
-  const cleaned = domain.replace(/^www\./i, "");
-  const parts = cleaned.replace(/\.(com|in|io|co|net|org|ai|tech)$/i, "").split(".");
-  return parts[parts.length - 1].toLowerCase();
+const KNOWN_JOB_BOARDS = new Set([
+  "linkedin.com", "indeed.com", "naukri.com", "wellfound.com",
+  "glassdoor.com", "monster.com", "shine.com", "timesjobs.com",
+  "foundit.in", "internshala.com", "unstop.com", "hirist.com",
+  "freshersworld.com", "apna.co", "cutshort.io",
+]);
+
+function isJobBoard(domain: string): boolean {
+  return KNOWN_JOB_BOARDS.has(domain.replace(/^www\./, "").toLowerCase());
 }
 
-async function searchMCA(companyName: string): Promise<ZaubacorpResult | null> {
+async function checkWebPresence(domain: string): Promise<WebPresenceResult> {
+  const jobBoard = isJobBoard(domain);
+
   try {
-    const response = await axios.get<{ data: ZaubacorpResult[] }>(
-      `https://www.zaubacorp.com/api/company-search`,
-      {
-        params: { q: companyName, limit: 1 },
-        timeout: SEARCH_TIMEOUT_MS,
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; Credify/1.0; +https://credify.app/bot)",
-          Accept: "application/json",
-        },
-      }
-    );
+    const response = await axios.head(`https://${domain}`, {
+      timeout: REQUEST_TIMEOUT_MS,
+      maxRedirects: 3,
+      validateStatus: () => true,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; Credify/1.0; +https://credify.app/bot)",
+      },
+    });
 
-    const results = response.data?.data;
-    if (!Array.isArray(results) || results.length === 0) return null;
-    return results[0];
+    return {
+      resolves: true,
+      isJobBoard: jobBoard,
+      statusCode: response.status,
+    };
   } catch {
-    return null;
+    return {
+      resolves: false,
+      isJobBoard: jobBoard,
+      statusCode: null,
+    };
   }
 }
 
@@ -50,86 +58,105 @@ export async function companyRegistrationSignal(
     return {
       id: "company_registration",
       category: "domain_company",
-      title: "Business Registration",
+      title: "Company Web Presence",
       riskLevel: "medium",
-      value: "No company domain found",
-      confidence: 35,
-      icon: "building",
-      explanation:
-        "No company domain was detected in this posting, so MCA registration status could not be checked.",
-      whyItMatters:
-        "Legitimate companies in India are required to register with the Ministry of Corporate Affairs (MCA). Without a domain, automated verification is not possible.",
-      advice: [
-        "Search the company name manually on the MCA portal: https://www.mca.gov.in",
-        "Look up the company on Zaubacorp (zaubacorp.com) or Tofler (tofler.in).",
-        "Ask the recruiter for the company CIN (Corporate Identification Number).",
-      ],
-    };
-  }
-
-  const companyName = domainToCompanyName(domain);
-  const result = await searchMCA(companyName);
-
-  if (!result) {
-    return {
-      id: "company_registration",
-      category: "domain_company",
-      title: "Business Registration",
-      riskLevel: "medium",
-      value: "Could not verify via MCA",
+      value: "No domain found",
       confidence: 40,
       icon: "building",
       explanation:
-        `Automated MCA registration lookup for "${companyName}" was unavailable. This does not mean the company is unregistered — manual verification is recommended.`,
+        "No company domain was detected in this posting. Web presence could not be verified.",
       whyItMatters:
-        "Verifying MCA registration confirms a company has legal standing in India. Automated checks are a convenience — manual verification on the MCA portal is always authoritative.",
+        "Every legitimate company has a website. A posting with no traceable company domain makes independent verification impossible.",
       advice: [
-        `Search for "${companyName}" at https://www.mca.gov.in/mcafoportal/viewCompanyMasterData.do`,
-        "Use Zaubacorp (zaubacorp.com) or Tofler (tofler.in) for free public MCA records.",
-        "Ask the recruiter for the CIN number and verify it independently.",
-        "Do not share personal documents before confirming registration.",
+        "Search the company name on Google and verify their official website.",
+        "Check for a LinkedIn company page with real employees.",
+        "Do not proceed without confirming the company exists independently.",
       ],
     };
   }
 
-  const isActive = result.status?.toLowerCase().includes("active") ?? false;
+  const presence = await checkWebPresence(domain);
 
-  if (!isActive) {
+  if (presence.isJobBoard) {
     return {
       id: "company_registration",
       category: "domain_company",
-      title: "Business Registration",
-      riskLevel: "high",
-      value: `Status: ${result.status}`,
-      confidence: 82,
+      title: "Company Web Presence",
+      riskLevel: "medium",
+      value: "Posted via job board",
+      confidence: 50,
       icon: "building",
-      explanation: `"${result.company_name}" is registered under MCA but its current status is "${result.status}", not Active.`,
+      explanation:
+        "This posting is hosted on a job board. The company's own website could not be directly verified from the listing.",
       whyItMatters:
-        "A struck-off, dissolved, or dormant company cannot legally conduct business or hire employees. Job postings from such entities are a serious red flag.",
+        "Job boards allow anyone to post a listing. Independently verifying the hiring company's website adds an important layer of credibility.",
       advice: [
-        "Do not apply or share information with a company that is not actively registered.",
-        `Verify the status directly at the MCA portal using CIN: ${result.cin}`,
-        "Contact a legal professional if you have already shared personal documents.",
+        "Search the company name directly on Google to find their official website.",
+        "Verify the company on LinkedIn — look for an active company page with real employees.",
+        "Check for the role on the company's own careers page.",
+        "Look up the company on MCA (mca.gov.in) or Zaubacorp for Indian companies.",
       ],
-      example:
-        "Scammers sometimes use the identity of dissolved companies to appear legitimate.",
     };
   }
-  
+
+  if (!presence.resolves) {
+    return {
+      id: "company_registration",
+      category: "red_flags",
+      title: "Company Website Unreachable",
+      riskLevel: "high",
+      value: `${domain} did not respond`,
+      confidence: 78,
+      icon: "building",
+      explanation: `The company domain "${domain}" could not be reached. The website may not exist or may be offline.`,
+      whyItMatters:
+        "A company that cannot maintain a working website is unlikely to be a legitimate employer. This is a strong red flag, especially for tech or professional roles.",
+      advice: [
+        "Search for the company name on LinkedIn to verify it exists independently.",
+        "If the company claims to be established, a non-working website is a serious warning sign.",
+        "Do not share personal documents with a company whose website is unreachable.",
+        "For Indian companies, verify on MCA portal: https://www.mca.gov.in",
+      ],
+      example:
+        "Scam operations often register a domain but never build a working website.",
+    };
+  }
+
+  if (presence.statusCode && presence.statusCode >= 400) {
+    return {
+      id: "company_registration",
+      category: "red_flags",
+      title: "Company Website Issue",
+      riskLevel: "medium",
+      value: `${domain} returned ${presence.statusCode}`,
+      confidence: 65,
+      icon: "building",
+      explanation: `The company website at "${domain}" responded with an error (HTTP ${presence.statusCode}), which may indicate a misconfigured or inactive site.`,
+      whyItMatters:
+        "A company website returning errors warrants additional verification before trusting the posting.",
+      advice: [
+        "Try visiting the website directly in your browser.",
+        "Search for the company on LinkedIn and Glassdoor.",
+        "Look for recent news or press coverage of this company.",
+      ],
+    };
+  }
+
   return {
     id: "company_registration",
-    category: "domain_company",
-    title: "Business Registration",
+    category: "positive",
+    title: "Company Website Verified",
     riskLevel: "low",
-    value: `CIN: ${result.cin}`,
-    confidence: 88,
+    value: `${domain} is live`,
+    confidence: 80,
     icon: "building",
-    explanation: `"${result.company_name}" is an Active registered company under MCA. Incorporated: ${result.date_of_incorporation}.`,
+    explanation: `The company website at "${domain}" is active and reachable — a positive credibility signal.`,
     whyItMatters:
-      "An active MCA registration means the company has legal standing, is accountable under Indian law, and has met incorporation requirements.",
+      "An active, reachable company website confirms the organization has a real web presence. Combined with other signals, this meaningfully increases posting credibility.",
     advice: [
-      "You can verify this CIN at any time on the MCA portal.",
-      "Continue standard due diligence before sharing sensitive personal information.",
+      "Verify the website looks professional and matches what the job posting claims.",
+      "Check the company's LinkedIn page for employee count and history.",
+      "Still perform standard due diligence before sharing sensitive personal information.",
     ],
   };
 }

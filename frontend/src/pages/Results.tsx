@@ -8,7 +8,6 @@ import ConfidenceBar from "../features/results/components/ConfidenceBar";
 import KeySignalsList from "../features/results/components/KeySignalsList";
 import InsightSection from "../features/results/components/InsightSection";
 import SafeChecklist from "../features/results/components/SafeChecklist";
-import RegistrationPanel from "../features/results/components/RegistrationPanel";
 
 export default function Results() {
   const navigate = useNavigate();
@@ -27,10 +26,6 @@ export default function Results() {
       return result.url;
     }
   })();
-
-  const registrationSignal = result.signals.find(
-    (s) => s.id === "company_registration"
-  );
 
   return (
     <div className="results-page">
@@ -70,8 +65,6 @@ export default function Results() {
               signals={grouped[cat] ?? []}
             />
           ))}
-
-          <RegistrationPanel signal={registrationSignal} />
 
           <SafeChecklist items={result.safetyChecklist} />
         </main>
