@@ -18,7 +18,7 @@ export default function UrlInputBar() {
       borderRadius: 12,
       padding: '6px 6px 6px 16px',
       gap: 8,
-      boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
     }}>
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#94a3b8" strokeWidth="2">
         <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />

@@ -2,16 +2,7 @@ import type { Signal } from "../../../types/Signal";
 import SignalRow from "./SignalRow";
 import { AlertTriangle, Globe, History, ShieldCheck, Briefcase } from "lucide-react";
 
-interface Props {
-  category:
-    | "red_flags"
-    | "domain_company"
-    | "domain_info"
-    | "historical"
-    | "positive"
-    | "job_title";
-  signals: Signal[];
-}
+interface Props {category:"red_flags" | "domain_company" | "domain_info"| "historical"| "positive"| "job_title";signals: Signal[];}
 
 const sectionMeta: Record<string, { label: string; icon: React.ElementType }> = {
   red_flags:      { label: "Red Flags",             icon: AlertTriangle },

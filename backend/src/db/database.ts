@@ -25,13 +25,16 @@ db.exec(`
     confidence INTEGER NOT NULL,
     signals TEXT NOT NULL,
     safety_checklist TEXT NOT NULL,
+    verdict_summary TEXT,
+    score_drivers TEXT,
+    is_partial_data INTEGER NOT NULL DEFAULT 0,
     analyzed_at TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
   CREATE INDEX IF NOT EXISTS idx_analysis_url_hash ON analysis_results(url_hash);
-  CREATE INDEX IF NOT EXISTS idx_analysis_domain ON analysis_results(domain);
-  CREATE INDEX IF NOT EXISTS idx_analysis_created ON analysis_results(created_at);
+  CREATE INDEX IF NOT EXISTS idx_analysis_domain   ON analysis_results(domain);
+  CREATE INDEX IF NOT EXISTS idx_analysis_created  ON analysis_results(created_at);
 
   CREATE TABLE IF NOT EXISTS domain_cache (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,6 +49,33 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_domain_cache_domain ON domain_cache(domain);
+
+  CREATE TABLE IF NOT EXISTS feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url_hash TEXT NOT NULL,
+    url TEXT NOT NULL,
+    domain TEXT NOT NULL,
+    risk_score INTEGER NOT NULL,
+    risk_level TEXT NOT NULL,
+    vote TEXT NOT NULL CHECK(vote IN ('correct','incorrect')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_feedback_url_hash ON feedback(url_hash);
+  CREATE INDEX IF NOT EXISTS idx_feedback_vote     ON feedback(vote);
 `);
+
+const existingCols = (db.pragma("table_info(analysis_results)") as Array<{ name: string }>)
+  .map((c) => c.name);
+
+if (!existingCols.includes("verdict_summary")) {
+  db.exec(`ALTER TABLE analysis_results ADD COLUMN verdict_summary TEXT`);
+}
+if (!existingCols.includes("score_drivers")) {
+  db.exec(`ALTER TABLE analysis_results ADD COLUMN score_drivers TEXT`);
+}
+if (!existingCols.includes("is_partial_data")) {
+  db.exec(`ALTER TABLE analysis_results ADD COLUMN is_partial_data INTEGER NOT NULL DEFAULT 0`);
+}
 
 export default db;

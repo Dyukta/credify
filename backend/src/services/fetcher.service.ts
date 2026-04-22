@@ -16,7 +16,7 @@ const axiosInstance = axios.create({
     "Sec-Fetch-Mode": "navigate",
     "Sec-Fetch-Site": "none",
     "Upgrade-Insecure-Requests": "1",
-    "Cache-Control": "max-age=0",
+    "Cache-Control": "max-age=0"
   },
 });
 

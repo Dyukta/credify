@@ -1,5 +1,5 @@
 import { RiskLevel, Signal } from "../types/Signal";
-import { AnalysisResult } from "../types/AnalysisResult";
+import { AnalysisResult, ScoreDriver } from "../types/AnalysisResult";
 import { ScoringResult } from "./scoring.service";
 
 const BASE_CHECKLIST = [
@@ -10,11 +10,10 @@ const BASE_CHECKLIST = [
   "If something feels off — trust that instinct and verify independently before proceeding.",
 ];
 
-function buildChecklist(riskLevel: RiskLevel, signals: Signal[]): string[] {
+function buildChecklist(signals: Signal[]): string[] {
   const checklist = [...BASE_CHECKLIST];
   const highSignals = signals.filter((s) => s.riskLevel === "high");
 
-  // Add specific items based on which signals actually fired
   for (const s of highSignals) {
     switch (s.id) {
       case "upfront_payment_language":
@@ -56,8 +55,58 @@ function buildChecklist(riskLevel: RiskLevel, signals: Signal[]): string[] {
     }
   }
 
-  // Deduplicate in case multiple signals trigger similar advice
   return [...new Set(checklist)];
+}
+
+function buildVerdictSummary(
+  riskLevel: RiskLevel,
+  riskScore: number,
+  signals: Signal[],
+  isPartialData: boolean
+): string {
+  const highSignals   = signals.filter((s) => s.riskLevel === "high");
+  const mediumSignals = signals.filter((s) => s.riskLevel === "medium");
+
+  const partialNote = isPartialData
+    ? " Note: this site limited automated access, so some signals have reduced confidence."
+    : "";
+
+  if (riskLevel === "low") {
+    const positiveCount = signals.filter((s) => s.riskLevel === "low").length;
+    return (
+      `This posting scored ${riskScore}/100 and shows mostly positive signals. ` +
+      `${positiveCount} out of ${signals.length} checks passed cleanly. ` +
+      `Standard precautions apply — verify the company independently before sharing personal documents.` +
+      partialNote
+    );
+  }
+
+  if (riskLevel === "high") {
+    const topFlags = highSignals.slice(0, 2).map((s) => s.title.toLowerCase());
+    const flagStr  = topFlags.length === 2
+      ? `${topFlags[0]} and ${topFlags[1]}`
+      : topFlags[0] ?? "multiple checks";
+
+    return (
+      `This posting scored ${riskScore}/100 and has serious red flags: ${flagStr}. ` +
+      `${highSignals.length} signal${highSignals.length !== 1 ? "s" : ""} fired at high risk. ` +
+      `Do not share personal information or pay any fees until you have independently verified this employer.` +
+      partialNote
+    );
+  }
+
+  const flagCount = highSignals.length + mediumSignals.length;
+  const topFlag   = highSignals[0] ?? mediumSignals[0];
+  const flagNote  = topFlag
+    ? ` The most significant concern is ${topFlag.title.toLowerCase()}.`
+    : "";
+
+  return (
+    `This posting scored ${riskScore}/100 and has ${flagCount} concern${flagCount !== 1 ? "s" : ""} worth reviewing.` +
+    flagNote +
+    ` Verify the company through independent sources before proceeding with an application.` +
+    partialNote
+  );
 }
 
 export interface InsightBuilderInput {
@@ -65,19 +114,24 @@ export interface InsightBuilderInput {
   domain: string;
   scoringResult: ScoringResult;
   riskLevel: RiskLevel;
+  isPartialData: boolean;
 }
 
 export function buildAnalysisResult(input: InsightBuilderInput): AnalysisResult {
-  const { url, domain, scoringResult, riskLevel } = input;
+  const { url, domain, scoringResult, riskLevel, isPartialData } = input;
+  const { signals, riskScore, confidence, scoreDrivers } = scoringResult;
 
   return {
     url,
     domain,
-    riskScore: scoringResult.riskScore,
+    riskScore,
     riskLevel,
-    confidence: scoringResult.confidence,
-    signals: scoringResult.signals,
-    safetyChecklist: buildChecklist(riskLevel, scoringResult.signals),
-    analyzedAt: new Date().toISOString(),
+    confidence,
+    signals,
+    safetyChecklist: buildChecklist(signals),
+    verdictSummary:  buildVerdictSummary(riskLevel, riskScore, signals, isPartialData),
+    scoreDrivers,
+    isPartialData,
+    analyzedAt: new Date().toISOString()
   };
 }

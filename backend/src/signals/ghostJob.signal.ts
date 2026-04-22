@@ -11,8 +11,44 @@ function daysSince(dateStr: string): number | null {
   }
 }
 
+type IndustryBucket = "tech" | "legal_finance" | "construction" | "general";
+
+interface GhostThresholds {
+  freshDays:  number;  
+  activeDays: number;   
+  mediumDays: number;  
+}
+
+const INDUSTRY_THRESHOLDS: Record<IndustryBucket, GhostThresholds> = {
+  tech:              { freshDays: 7,  activeDays: 21, mediumDays: 45 },
+  legal_finance:     { freshDays: 7,  activeDays: 30, mediumDays: 60 },
+  construction:      { freshDays: 14, activeDays: 45, mediumDays: 90 },
+  general:           { freshDays: 7,  activeDays: 30, mediumDays: 60 },
+};
+
+const TECH_PATTERNS = [
+  /\b(engineer|developer|architect|programmer|devops|fullstack|frontend|backend|data\s+scientist|ml\s+engineer|sre|qa\s+engineer|cloud)\b/i,
+  /\b(software|react|node|python|java|golang|typescript|kubernetes|aws|gcp|azure)\b/i,
+];
+
+const LEGAL_FINANCE_PATTERNS = [
+  /\b(lawyer|attorney|legal|counsel|compliance|auditor|chartered\s+accountant|ca\s+|cfa|analyst|investment|banker|finance\s+manager)\b/i,
+];
+
+const CONSTRUCTION_PATTERNS = [
+  /\b(civil|construction|site\s+engineer|project\s+manager|contractor|architect|surveyor|infrastructure|foreman)\b/i,
+];
+
+function detectIndustry(title: string | null): IndustryBucket {
+  if (!title) return "general";
+  if (TECH_PATTERNS.some((p) => p.test(title)))             return "tech";
+  if (LEGAL_FINANCE_PATTERNS.some((p) => p.test(title)))    return "legal_finance";
+  if (CONSTRUCTION_PATTERNS.some((p) => p.test(title)))     return "construction";
+  return "general";
+}
+
 export function ghostJobSignal(data: ParsedJobPage): Signal {
-  const { postingDate } = data;
+  const { postingDate, jobTitle } = data;
 
   if (!postingDate) {
     return {
@@ -46,8 +82,7 @@ export function ghostJobSignal(data: ParsedJobPage): Signal {
       value: "Date unreadable",
       confidence: 35,
       icon: "history",
-      explanation:
-        "The posting date could not be parsed. Ghost job risk cannot be assessed.",
+      explanation: "The posting date could not be parsed. Ghost job risk cannot be assessed.",
       whyItMatters:
         "Posting age is one of the strongest indicators of a ghost job. Roles that stay open past 30–41 days are statistically more likely to be unfilled or fake.",
       advice: [
@@ -56,52 +91,11 @@ export function ghostJobSignal(data: ParsedJobPage): Signal {
     };
   }
 
-  // Research: SHRM average fill time = 41 days (2024)
-  // Research: >30 days = likely ghost per ResumeUp.AI analysis of 2025 LinkedIn data
+  const industry   = detectIndustry(jobTitle);
+  const thresholds = INDUSTRY_THRESHOLDS[industry];
+  const industryLabel = industry === "general" ? "" : ` for ${industry.replace("_", "/")} roles`;
 
-  if (daysOld > 60) {
-    return {
-      id: "ghost_job",
-      category: "historical",
-      title: "Likely Ghost Job",
-      riskLevel: "high",
-      value: `Posted ${daysOld} days ago`,
-      confidence: 82,
-      icon: "history",
-      explanation: `This posting has been active for ${daysOld} days — well past the 41-day average fill time. Research shows 40% of companies admit to posting jobs with no intention of hiring.`,
-      whyItMatters:
-        "A 2025 analysis found 27% of LinkedIn postings are ghost jobs. Roles open for 60+ days without closure are a strong indicator of either a ghost posting or a company that is not actively hiring.",
-      advice: [
-        "Message the hiring manager on LinkedIn directly to confirm the role is still open.",
-        "Check if the role appears on the company's official careers page — if not listed there, it may be a ghost.",
-        "Search 'company name + layoffs' or 'hiring freeze' to check if the company is actually recruiting.",
-        "Do not invest significant time in applications to roles this old without first confirming they are active.",
-      ],
-      example:
-        "40% of companies admit to posting ghost jobs. 79% of fake tech listings were still active when researchers checked months later.",
-    };
-  }
-
-  if (daysOld > 30) {
-    return {
-      id: "ghost_job",
-      category: "historical",
-      title: "Possible Ghost Job",
-      riskLevel: "medium",
-      value: `Posted ${daysOld} days ago`,
-      confidence: 65,
-      icon: "history",
-      explanation: `This posting is ${daysOld} days old, past the typical 30-day threshold used to identify likely ghost jobs.`,
-      whyItMatters:
-        "Industry data shows most active roles are filled within 30–41 days. A posting in this range warrants a quick check before investing time in an application.",
-      advice: [
-        "Confirm the role is still open before applying by messaging HR or checking the careers page.",
-        "Look for recent company news about hiring or layoffs.",
-      ],
-    };
-  }
-
-  if (daysOld <= 7) {
+  if (daysOld <= thresholds.freshDays) {
     return {
       id: "ghost_job",
       category: "positive",
@@ -111,26 +105,71 @@ export function ghostJobSignal(data: ParsedJobPage): Signal {
       confidence: 82,
       icon: "history",
       explanation:
-        "This is a very recently posted role — within the first week. Fresh postings have the highest likelihood of active hiring intent.",
+        `Very recently posted${industryLabel} — within the first ${thresholds.freshDays} days. Fresh postings have the highest likelihood of active hiring intent.`,
       whyItMatters:
-        "Early postings correlate strongly with genuine hiring need. Applying early also increases your chance of being seen before the applicant pool grows.",
+        "Early postings correlate strongly with genuine hiring need. Applying early also improves your chances before the applicant pool grows.",
       advice: [
         "Apply promptly — fresh postings receive faster responses and smaller applicant pools.",
       ],
     };
   }
 
+  if (daysOld <= thresholds.activeDays) {
+    return {
+      id: "ghost_job",
+      category: "positive",
+      title: "Active Posting Age",
+      riskLevel: "low",
+      value: `Posted ${daysOld} days ago`,
+      confidence: 78,
+      icon: "history",
+      explanation:
+        `Posted ${daysOld} days ago — within the normal active hiring window${industryLabel} of ${thresholds.freshDays}–${thresholds.activeDays} days.`,
+      whyItMatters:
+        "A posting within the active hiring window is consistent with a genuinely recruiting employer.",
+      advice: ["Proceed with standard application steps."],
+    };
+  }
+
+  if (daysOld <= thresholds.mediumDays) {
+    return {
+      id: "ghost_job",
+      category: "historical",
+      title: "Possible Ghost Job",
+      riskLevel: "medium",
+      value: `Posted ${daysOld} days ago`,
+      confidence: 65,
+      icon: "history",
+      explanation:
+        `This posting is ${daysOld} days old — past the typical active window${industryLabel} of ${thresholds.activeDays} days.`,
+      whyItMatters:
+        "Industry data shows most active roles are filled within their typical window. A posting in this range warrants a quick check before investing time in an application.",
+      advice: [
+        "Confirm the role is still open before applying by messaging HR or checking the careers page.",
+        "Look for recent company news about hiring or layoffs.",
+      ],
+    };
+  }
+
   return {
     id: "ghost_job",
-    category: "positive",
-    title: "Active Posting Age",
-    riskLevel: "low",
+    category: "historical",
+    title: "Likely Ghost Job",
+    riskLevel: "high",
     value: `Posted ${daysOld} days ago`,
-    confidence: 78,
+    confidence: 82,
     icon: "history",
-    explanation: `Posted ${daysOld} days ago — within the normal active hiring window of 0–30 days.`,
+    explanation:
+      `This posting has been active for ${daysOld} days — well past the ${thresholds.mediumDays}-day threshold${industryLabel}. Research shows 40% of companies admit to posting jobs with no intention of hiring.`,
     whyItMatters:
-      "A posting in the 1–4 week range is consistent with an actively recruiting employer. This is a positive signal.",
-    advice: ["Proceed with standard application steps."],
+      "A 2025 analysis found 27% of LinkedIn postings are ghost jobs. Roles open this long without closure are a strong indicator of either a ghost posting or a company not actively hiring.",
+    advice: [
+      "Message the hiring manager on LinkedIn directly to confirm the role is still open.",
+      "Check if the role appears on the company's official careers page.",
+      "Search 'company name + layoffs' or 'hiring freeze' to check if they are actually recruiting.",
+      "Do not invest significant time without first confirming the role is active.",
+    ],
+    example:
+      "40% of companies admit to posting ghost jobs. 79% of fake tech listings were still active when researchers checked months later.",
   };
 }

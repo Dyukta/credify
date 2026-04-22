@@ -1,57 +1,26 @@
 import axios from "axios";
 import { Signal } from "../types/Signal";
 import { ParsedJobPage } from "../services/parser.service";
+import { isKnownJobBoard } from "../utils/knownDomains";
 
 const REQUEST_TIMEOUT_MS = 5000;
 
-interface WebPresenceResult {
-  resolves: boolean;
-  isJobBoard: boolean;
-  statusCode: number | null;
-}
-
-const KNOWN_JOB_BOARDS = new Set([
-  "linkedin.com", "indeed.com", "naukri.com", "wellfound.com",
-  "glassdoor.com", "monster.com", "shine.com", "timesjobs.com",
-  "foundit.in", "internshala.com", "unstop.com", "hirist.com",
-  "freshersworld.com", "apna.co", "cutshort.io",
-]);
-
-function isJobBoard(domain: string): boolean {
-  return KNOWN_JOB_BOARDS.has(domain.replace(/^www\./, "").toLowerCase());
-}
-
-async function checkWebPresence(domain: string): Promise<WebPresenceResult> {
-  const jobBoard = isJobBoard(domain);
-
+async function checkWebPresence(domain: string): Promise<{ resolves: boolean; isJobBoard: boolean; statusCode: number | null }> {
+  const jobBoard = isKnownJobBoard(domain);
   try {
     const response = await axios.head(`https://${domain}`, {
       timeout: REQUEST_TIMEOUT_MS,
       maxRedirects: 3,
       validateStatus: () => true,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; Credify/1.0; +https://credify.app/bot)",
-      },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Credify/1.0; +https://credify.app/bot)" },
     });
-
-    return {
-      resolves: true,
-      isJobBoard: jobBoard,
-      statusCode: response.status,
-    };
+    return { resolves: true, isJobBoard: jobBoard, statusCode: response.status };
   } catch {
-    return {
-      resolves: false,
-      isJobBoard: jobBoard,
-      statusCode: null,
-    };
+    return { resolves: false, isJobBoard: jobBoard, statusCode: null };
   }
 }
 
-export async function companyRegistrationSignal(
-  data: ParsedJobPage
-): Promise<Signal> {
+export async function companyRegistrationSignal(data: ParsedJobPage): Promise<Signal> {
   const domain = data.companyDomain;
 
   if (!domain) {
@@ -63,10 +32,8 @@ export async function companyRegistrationSignal(
       value: "No domain found",
       confidence: 40,
       icon: "building",
-      explanation:
-        "No company domain was detected in this posting. Web presence could not be verified.",
-      whyItMatters:
-        "Every legitimate company has a website. A posting with no traceable company domain makes independent verification impossible.",
+      explanation: "No company domain was detected in this posting. Web presence could not be verified.",
+      whyItMatters: "Every legitimate company has a website. A posting with no traceable company domain makes independent verification impossible.",
       advice: [
         "Search the company name on Google and verify their official website.",
         "Check for a LinkedIn company page with real employees.",
@@ -86,15 +53,13 @@ export async function companyRegistrationSignal(
       value: "Posted via job board",
       confidence: 50,
       icon: "building",
-      explanation:
-        "This posting is hosted on a job board. The company's own website could not be directly verified from the listing.",
-      whyItMatters:
-        "Job boards allow anyone to post a listing. Independently verifying the hiring company's website adds an important layer of credibility.",
+      explanation: "This posting is hosted on a job board. The company's own website could not be directly verified.",
+      whyItMatters: "Job boards allow anyone to post a listing. Independently verifying the hiring company's website adds an important layer of credibility.",
       advice: [
         "Search the company name directly on Google to find their official website.",
         "Verify the company on LinkedIn — look for an active company page with real employees.",
         "Check for the role on the company's own careers page.",
-        "Look up the company on MCA (mca.gov.in) or Zaubacorp for Indian companies.",
+        "Look up the company on MCA (mca.gov.in) for Indian companies.",
       ],
     };
   }
@@ -109,20 +74,18 @@ export async function companyRegistrationSignal(
       confidence: 78,
       icon: "building",
       explanation: `The company domain "${domain}" could not be reached. The website may not exist or may be offline.`,
-      whyItMatters:
-        "A company that cannot maintain a working website is unlikely to be a legitimate employer. This is a strong red flag, especially for tech or professional roles.",
+      whyItMatters: "A company that cannot maintain a working website is unlikely to be a legitimate employer.",
       advice: [
         "Search for the company name on LinkedIn to verify it exists independently.",
         "If the company claims to be established, a non-working website is a serious warning sign.",
         "Do not share personal documents with a company whose website is unreachable.",
         "For Indian companies, verify on MCA portal: https://www.mca.gov.in",
       ],
-      example:
-        "Scam operations often register a domain but never build a working website.",
+      example: "Scam operations often register a domain but never build a working website.",
     };
   }
 
-  if (presence.statusCode && presence.statusCode >= 400) {
+  if (presence.statusCode !== null && presence.statusCode >= 400) {
     return {
       id: "company_registration",
       category: "red_flags",
@@ -131,9 +94,8 @@ export async function companyRegistrationSignal(
       value: `${domain} returned ${presence.statusCode}`,
       confidence: 65,
       icon: "building",
-      explanation: `The company website at "${domain}" responded with an error (HTTP ${presence.statusCode}), which may indicate a misconfigured or inactive site.`,
-      whyItMatters:
-        "A company website returning errors warrants additional verification before trusting the posting.",
+      explanation: `The company website at "${domain}" responded with an error (HTTP ${presence.statusCode}).`,
+      whyItMatters: "A company website returning errors warrants additional verification before trusting the posting.",
       advice: [
         "Try visiting the website directly in your browser.",
         "Search for the company on LinkedIn and Glassdoor.",
@@ -151,8 +113,7 @@ export async function companyRegistrationSignal(
     confidence: 80,
     icon: "building",
     explanation: `The company website at "${domain}" is active and reachable — a positive credibility signal.`,
-    whyItMatters:
-      "An active, reachable company website confirms the organization has a real web presence. Combined with other signals, this meaningfully increases posting credibility.",
+    whyItMatters: "An active, reachable company website confirms the organization has a real web presence.",
     advice: [
       "Verify the website looks professional and matches what the job posting claims.",
       "Check the company's LinkedIn page for employee count and history.",

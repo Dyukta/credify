@@ -1,10 +1,6 @@
 import * as cheerio from "cheerio";
-import {
-  getCachedDomain,
-  isWhoisStale,
-  upsertDomainCache,
-} from "../db/domainCacheRepo";
-
+import { getCachedDomain, isWhoisStale, upsertDomainCache } from "../db/domainCacheRepo";
+import { getRootDomain } from "../utils/knownDomains";
 
 const whoiser = require("whoiser") as (
   host: string,
@@ -21,13 +17,11 @@ export interface ParsedJobPage {
   postingDate: string | null;
   domainAgeDays: number | null;
   isPartialData: boolean;
-  rawContactMentions: string | null; // ← new: WhatsApp/Telegram/apply-via mentions
+  rawContactMentions: string | null;
 }
 
 const EMAIL_REGEX = /\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b/g;
 
-// Catches WhatsApp links, Telegram handles, Google Form links, phone numbers,
-// "apply via" instructions — fed to Gemini for communication_channel signal
 const CONTACT_HINT_PATTERNS = [
   /whatsapp[^\s]{0,40}/gi,
   /wa\.me\/[^\s]{0,30}/gi,
@@ -101,23 +95,20 @@ function cleanJobTitle(title: string): string {
 function extractEmail(html: string): string | null {
   const matches = html.match(EMAIL_REGEX);
   if (!matches) return null;
-  const filtered = matches.filter((e) => !/\.(png|jpg|svg)$/i.test(e));
-  return filtered[0] ?? null;
+  return matches.filter((e) => !/\.(png|jpg|svg)$/i.test(e))[0] ?? null;
 }
 
 function extractSalaryMention(text: string): boolean {
   return SALARY_PATTERNS.some((pattern) => pattern.test(text));
 }
 
-// New — extracts contact channel hints for Gemini
-function extractContactMentions(text: string): string | null {
+function extractContactMentions(visibleText: string): string | null {
   const hits: string[] = [];
   for (const pattern of CONTACT_HINT_PATTERNS) {
-    const matches = text.match(pattern);
+    const matches = visibleText.match(pattern);
     if (matches) hits.push(...matches);
   }
   if (hits.length === 0) return null;
-  // Deduplicate and cap length so we don't bloat the prompt
   return [...new Set(hits)].slice(0, 10).join(" | ").slice(0, 400);
 }
 
@@ -174,14 +165,11 @@ function extractCompanyName($: cheerio.CheerioAPI): string | null {
         parsed?.publisher?.name;
       if (employer) return String(employer).trim();
     }
-  } catch {}
+  } catch { }
   return null;
 }
 
-function detectPartialData(
-  $: cheerio.CheerioAPI,
-  description: string | null
-): boolean {
+function detectPartialData($: cheerio.CheerioAPI, description: string | null): boolean {
   const bodyText = normalize($("body").text());
   if (bodyText.length < 200) return true;
   if (!description || description.trim().split(/\s+/).length < 80) return true;
@@ -189,19 +177,16 @@ function detectPartialData(
 }
 
 async function getDomainAgeDays(hostname: string): Promise<number | null> {
-  const cached = getCachedDomain(hostname);
-  if (cached && !isWhoisStale(cached)) {
-    return cached.domainAgeDays;
-  }
+  const root = getRootDomain(hostname);
+
+  const cached = getCachedDomain(root);
+  if (cached && !isWhoisStale(cached)) return cached.domainAgeDays;
 
   try {
-    const whoisData = await whoiser(hostname, { timeout: 4000 });
+    const whoisData = await whoiser(root, { timeout: 4000 });
     const firstResult = Object.values(whoisData)[0];
     if (!firstResult) {
-      upsertDomainCache(hostname, {
-        domainAgeDays: null,
-        whoisLastChecked: new Date().toISOString(),
-      });
+      upsertDomainCache(root, { domainAgeDays: null, whoisLastChecked: new Date().toISOString() });
       return null;
     }
 
@@ -213,10 +198,7 @@ async function getDomainAgeDays(hostname: string): Promise<number | null> {
       null;
 
     if (!raw) {
-      upsertDomainCache(hostname, {
-        domainAgeDays: null,
-        whoisLastChecked: new Date().toISOString(),
-      });
+      upsertDomainCache(root, { domainAgeDays: null, whoisLastChecked: new Date().toISOString() });
       return null;
     }
 
@@ -225,36 +207,24 @@ async function getDomainAgeDays(hostname: string): Promise<number | null> {
     if (isNaN(created.getTime())) return null;
 
     const ageDays = Math.floor((Date.now() - created.getTime()) / 86_400_000);
-
-    upsertDomainCache(hostname, {
-      domainAgeDays: ageDays,
-      whoisLastChecked: new Date().toISOString(),
-    });
-
+    upsertDomainCache(root, { domainAgeDays: ageDays, whoisLastChecked: new Date().toISOString() });
     return ageDays;
   } catch {
     return null;
   }
 }
 
-export async function parseJobPage(
-  html: string,
-  sourceUrl: string
-): Promise<ParsedJobPage> {
+export async function parseJobPage(html: string, sourceUrl: string): Promise<ParsedJobPage> {
   const $ = cheerio.load(html);
 
   $("script[src],style,nav,footer,header,iframe,noscript").remove();
   const companyName = extractCompanyName($);
-  $("script").remove();
-
+  $("script").remove(); 
   const description = extractDescription($);
   const isPartialData = detectPartialData($, description);
   const hostname = new URL(sourceUrl).hostname.replace(/^www\./, "");
-
-
-  const rawContactMentions = extractContactMentions(
-    (description ?? "") + " " + html.slice(0, 10_000)
-  );
+  const visibleText = (description ?? "") + " " + normalize($("body").text()).slice(0, 5000);
+  const rawContactMentions = extractContactMentions(visibleText);
 
   return {
     jobTitle: extractJobTitle($),

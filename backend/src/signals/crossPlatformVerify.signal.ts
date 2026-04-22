@@ -1,36 +1,23 @@
 import axios from "axios";
 import { Signal } from "../types/Signal";
 import { ParsedJobPage } from "../services/parser.service";
+import { KNOWN_JOB_BOARDS, getRootDomain } from "../utils/knownDomains";
 
 const TIMEOUT_MS = 4000;
-
 const CAREERS_PATHS = [
   "/careers", "/jobs", "/careers/jobs",
   "/about/careers", "/join-us", "/work-with-us",
 ];
 
-const KNOWN_JOB_BOARDS = new Set([
-  "linkedin.com", "indeed.com", "naukri.com", "wellfound.com",
-  "glassdoor.com", "monster.com", "shine.com", "timesjobs.com",
-  "foundit.in", "internshala.com", "unstop.com", "hirist.com",
-  "freshersworld.com", "apna.co", "cutshort.io",
+const STOP_WORDS = new Set([
+  "and","or","the","a","an","of","in","at","for","to","with","on","is","are","be",
 ]);
 
-function getRootDomain(domain: string): string {
-  const parts = domain.replace(/^www\./, "").split(".");
-  if (parts.length > 2) return parts.slice(-2).join(".");
-  return domain;
-}
-
 function getTitleKeywords(title: string): string[] {
-  const stopWords = new Set([
-    "and","or","the","a","an","of","in","at","for",
-    "to","with","on","is","are","be",
-  ]);
   return title
     .toLowerCase()
     .split(/[\s,\-–\/]+/)
-    .filter((w) => w.length > 2 && !stopWords.has(w));
+    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
 }
 
 async function fetchCareersPageText(domain: string): Promise<string | null> {
@@ -148,7 +135,7 @@ export async function crossPlatformVerifySignal(data: ParsedJobPage): Promise<Si
     value: `Role not confirmed on ${rootDomain}`,
     confidence: 65,
     icon: "search",
-    explanation: `${rootDomain} has a careers page but this role ("${data.jobTitle.slice(0, 50)}") could not be found there. This may be a ghost job or impersonation posting.`,
+    explanation: `${rootDomain} has a careers page but this role ("${data.jobTitle.slice(0, 50)}") could not be found there.`,
     whyItMatters: "If a company is actively hiring for a role, it should appear on their own careers page.",
     advice: [
       `Visit ${rootDomain}'s careers page directly to search for this role.`,

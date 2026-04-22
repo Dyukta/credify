@@ -16,7 +16,7 @@ const KNOWN_JOB_PLATFORMS = new Set<string>([
   'careers.google.com',
   'jobs.apple.com',
   'amazon.jobs',
-  'careers.microsoft.com',
+  'careers.microsoft.com'
 ])
 
 const normalizeHost = (hostname: string): string =>

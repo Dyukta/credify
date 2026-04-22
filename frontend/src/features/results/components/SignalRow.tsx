@@ -2,31 +2,24 @@ import { useState } from "react";
 import type { Signal } from "../../../types/Signal";
 import Badge from "../../../shared/Badge";
 import ProgressBar from "../../../shared/ProgressBar";
-
-import {
-  Mail,
-  FileText,
-  Clock,
-  Globe,
-  Star,
-  History,
-  ChevronDown,
-  Circle,
-  Building
-} from "lucide-react";
+import {Mail,FileText,Clock,Globe,Star,History,ChevronDown,Circle,Building,Briefcase,AlertTriangle,Search,DollarSign}from "lucide-react";
 
 interface Props {
   signal: Signal;
 }
 
 const signalIcon: Record<string, React.ComponentType<{ size?: number }>> = {
-  email: Mail,
+  email:    Mail,
   document: FileText,
-  clock: Clock,
-  globe: Globe,
-  star: Star,
-  history: History,
+  clock:    Clock,
+  globe:    Globe,
+  star:     Star,
+  history:  History,
   building: Building,
+  briefcase: Briefcase,
+  alert:    AlertTriangle,
+  search:   Search,
+  currency: DollarSign
 };
 
 export default function SignalRow({ signal }: Props) {
@@ -35,10 +28,7 @@ export default function SignalRow({ signal }: Props) {
 
   return (
     <div className="signal-row">
-      <button
-        className="signal-row-header"
-        onClick={() => setOpen((o) => !o)}
-      >
+      <button className="signal-row-header" onClick={() => setOpen((o) => !o)}>
         <div className="signal-row-icon">
           <Icon size={18} />
         </div>
@@ -51,18 +41,13 @@ export default function SignalRow({ signal }: Props) {
 
           <div className="signal-row-meta">
             <span>{signal.value}</span>
-            <span className="signal-confidence">
-              {signal.confidence}% confidence
-            </span>
+            <span className="signal-confidence">{signal.confidence}% confidence</span>
           </div>
 
           <p className="signal-row-explanation">{signal.explanation}</p>
         </div>
 
-        <ChevronDown
-          size={16}
-          className={`signal-row-chevron ${open ? "open" : ""}`}
-        />
+        <ChevronDown size={16} className={`signal-row-chevron ${open ? "open" : ""}`} />
       </button>
 
       {open && (

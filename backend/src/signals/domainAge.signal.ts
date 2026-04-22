@@ -14,7 +14,6 @@ const ESTABLISHED_DOMAINS = new Set([
 ]);
 
 function getRootDomain(domain: string): string {
-  // Strip subdomains: usijobs.deloitte.com → deloitte.com
   const parts = domain.replace(/^www\./, "").split(".");
   if (parts.length > 2) {
     return parts.slice(-2).join(".");

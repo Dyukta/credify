@@ -9,7 +9,6 @@ class MemoryCache<T> {
 
   constructor(ttlMinutes: number) {
     this.ttlMs = ttlMinutes * 60 * 1000;
-    // Cleanup stale entries every 10 minutes
     setInterval(() => this.cleanup(), 10 * 60 * 1000).unref();
   }
 

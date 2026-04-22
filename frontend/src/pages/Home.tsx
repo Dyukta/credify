@@ -26,6 +26,13 @@ export default function Home() {
 
   return (
     <main className="page-center">
+      <nav className="results-nav">
+          <div className="nav-brand">
+            <ShieldCheck size={18} />
+            <span>Credify</span>
+          </div>
+      </nav>
+
       <div className="container-sm">
         <h1 className="hero-title">
           Analyze Job Posting <br /> Credibility Instantly

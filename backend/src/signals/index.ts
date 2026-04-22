@@ -5,40 +5,43 @@ import { careersPageSignal } from "./careersPage.signal";
 import { companyRegistrationSignal } from "./companyRegistration.signal";
 import { ghostJobSignal } from "./ghostJob.signal";
 import { crossPlatformVerifySignal } from "./crossPlatformVerify.signal";
+import { repostFrequencySignal } from "./repostFrequency.signal";
 import { runAISignals } from "../services/aiSignals.service";
 import pino from "pino";
 
 const logger = pino({ name: "signals-index" });
-
-type SignalFn = (data: ParsedJobPage) => Signal | Promise<Signal>;
-
-const TECHNICAL_SIGNALS: SignalFn[] = [
-  domainAgeSignal,
-  careersPageSignal,
-  companyRegistrationSignal,
-  ghostJobSignal,
-  crossPlatformVerifySignal,
+const TECHNICAL_SIGNALS: Array<{ id: string; fn: (data: ParsedJobPage) => Signal | Promise<Signal> }> = [
+  { id: "domain_age",            fn: domainAgeSignal            },
+  { id: "careers_page",          fn: careersPageSignal          },
+  { id: "company_registration",  fn: companyRegistrationSignal  },
+  { id: "ghost_job",             fn: ghostJobSignal             },
+  { id: "cross_platform_verify", fn: crossPlatformVerifySignal  },
+  { id: "repost_frequency",      fn: repostFrequencySignal      },
 ];
+
+function makeFallback(id: string): Signal {
+  return {
+    id,
+    category: "domain_company",
+    title: "Check Unavailable",
+    riskLevel: "medium",
+    value: "Could not evaluate",
+    confidence: 20,
+    icon: "clock",
+    explanation: "This check could not be completed. Manual verification recommended.",
+    whyItMatters: "Verify this aspect of the posting manually.",
+    advice: ["Check this signal manually before proceeding."],
+  };
+}
 
 async function runTechnicalSignals(data: ParsedJobPage): Promise<Signal[]> {
   return Promise.all(
-    TECHNICAL_SIGNALS.map(async (fn) => {
+    TECHNICAL_SIGNALS.map(async ({ id, fn }) => {
       try {
         return await fn(data);
       } catch (err) {
-        logger.warn({ err, signal: fn.name }, "Technical signal failed — using fallback");
-        return {
-          id: fn.name,
-          category: "domain_company" as const,
-          title: "Check Unavailable",
-          riskLevel: "medium" as const,
-          value: "Could not evaluate",
-          confidence: 20,
-          icon: "clock",
-          explanation: "This check could not be completed. Manual verification recommended.",
-          whyItMatters: "Verify this aspect of the posting manually.",
-          advice: ["Check this signal manually before proceeding."],
-        };
+        logger.warn({ err, signal: id }, "Technical signal failed — using fallback");
+        return makeFallback(id);
       }
     })
   );
