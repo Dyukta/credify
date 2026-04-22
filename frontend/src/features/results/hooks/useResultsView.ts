@@ -34,6 +34,9 @@ export function useResultsView() {
       const key = signal.category as Category;
       if (key in initial) {
         initial[key].push(signal);
+      } else {
+        // Unknown category — put in domain_company as fallback
+        initial["domain_company"].push(signal);
       }
     });
 

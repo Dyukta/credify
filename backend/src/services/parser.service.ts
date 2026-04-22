@@ -1,6 +1,11 @@
 import * as cheerio from "cheerio";
+import {
+  getCachedDomain,
+  isWhoisStale,
+  upsertDomainCache,
+} from "../db/domainCacheRepo";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const whoiser = require("whoiser") as (
   host: string,
   opts: { timeout: number }
@@ -16,10 +21,23 @@ export interface ParsedJobPage {
   postingDate: string | null;
   domainAgeDays: number | null;
   isPartialData: boolean;
+  rawContactMentions: string | null; // ← new: WhatsApp/Telegram/apply-via mentions
 }
 
-const EMAIL_REGEX =
-  /\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b/g;
+const EMAIL_REGEX = /\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b/g;
+
+// Catches WhatsApp links, Telegram handles, Google Form links, phone numbers,
+// "apply via" instructions — fed to Gemini for communication_channel signal
+const CONTACT_HINT_PATTERNS = [
+  /whatsapp[^\s]{0,40}/gi,
+  /wa\.me\/[^\s]{0,30}/gi,
+  /t\.me\/[^\s]{0,30}/gi,
+  /telegram[^\s]{0,40}/gi,
+  /google\.com\/forms[^\s]{0,60}/gi,
+  /apply\s+(?:via|through|on|at)\s+[^\s.]{1,30}/gi,
+  /(?:call|contact|reach|dm)\s+(?:us|hr|recruiter)[^\s.]{0,30}/gi,
+  /\+?[0-9]{10,13}/g,
+];
 
 const SALARY_PATTERNS = [
   /\$[\d,]+(\s*(–|-|to)\s*\$[\d,]+)?(\s*\/\s*(hour|hr|year|yr|month|annum))?/i,
@@ -64,6 +82,8 @@ const TITLE_SUFFIX_PATTERNS = [
   /\s*[\|–\-]\s*(LinkedIn|Indeed|Naukri|Glassdoor|Monster|Wellfound|Internshala|Foundit|Shine|Unstop).*$/i,
   /\s*[\|–\-]\s*Jobs?\s*$/i,
   /\s*[\|–\-]\s*Careers?\s*$/i,
+  /^Check out this job at .+?,\s*/i,
+  /\s*[\|–\-]\s*Apply.*$/i,
 ];
 
 function normalize(text: string): string {
@@ -87,6 +107,18 @@ function extractEmail(html: string): string | null {
 
 function extractSalaryMention(text: string): boolean {
   return SALARY_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+// New — extracts contact channel hints for Gemini
+function extractContactMentions(text: string): string | null {
+  const hits: string[] = [];
+  for (const pattern of CONTACT_HINT_PATTERNS) {
+    const matches = text.match(pattern);
+    if (matches) hits.push(...matches);
+  }
+  if (hits.length === 0) return null;
+  // Deduplicate and cap length so we don't bloat the prompt
+  return [...new Set(hits)].slice(0, 10).join(" | ").slice(0, 400);
 }
 
 function extractPostingDate($: cheerio.CheerioAPI): string | null {
@@ -151,18 +183,27 @@ function detectPartialData(
   description: string | null
 ): boolean {
   const bodyText = normalize($("body").text());
-  // Consider partial if body is tiny OR description is suspiciously short
-  // (catches job boards that return 403 with minimal HTML)
   if (bodyText.length < 200) return true;
   if (!description || description.trim().split(/\s+/).length < 80) return true;
   return false;
 }
 
 async function getDomainAgeDays(hostname: string): Promise<number | null> {
+  const cached = getCachedDomain(hostname);
+  if (cached && !isWhoisStale(cached)) {
+    return cached.domainAgeDays;
+  }
+
   try {
     const whoisData = await whoiser(hostname, { timeout: 4000 });
     const firstResult = Object.values(whoisData)[0];
-    if (!firstResult) return null;
+    if (!firstResult) {
+      upsertDomainCache(hostname, {
+        domainAgeDays: null,
+        whoisLastChecked: new Date().toISOString(),
+      });
+      return null;
+    }
 
     const raw =
       firstResult["Created Date"] ??
@@ -171,13 +212,26 @@ async function getDomainAgeDays(hostname: string): Promise<number | null> {
       firstResult["created"] ??
       null;
 
-    if (!raw) return null;
+    if (!raw) {
+      upsertDomainCache(hostname, {
+        domainAgeDays: null,
+        whoisLastChecked: new Date().toISOString(),
+      });
+      return null;
+    }
 
     const dateStr = Array.isArray(raw) ? String(raw[0]) : String(raw);
     const created = new Date(dateStr);
     if (isNaN(created.getTime())) return null;
 
-    return Math.floor((Date.now() - created.getTime()) / 86_400_000);
+    const ageDays = Math.floor((Date.now() - created.getTime()) / 86_400_000);
+
+    upsertDomainCache(hostname, {
+      domainAgeDays: ageDays,
+      whoisLastChecked: new Date().toISOString(),
+    });
+
+    return ageDays;
   } catch {
     return null;
   }
@@ -197,6 +251,11 @@ export async function parseJobPage(
   const isPartialData = detectPartialData($, description);
   const hostname = new URL(sourceUrl).hostname.replace(/^www\./, "");
 
+
+  const rawContactMentions = extractContactMentions(
+    (description ?? "") + " " + html.slice(0, 10_000)
+  );
+
   return {
     jobTitle: extractJobTitle($),
     jobDescription: description,
@@ -207,5 +266,6 @@ export async function parseJobPage(
     postingDate: extractPostingDate($),
     domainAgeDays: await getDomainAgeDays(hostname),
     isPartialData,
+    rawContactMentions,
   };
 }

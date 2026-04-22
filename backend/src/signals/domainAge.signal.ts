@@ -7,13 +7,26 @@ const ESTABLISHED_DOMAINS = new Set([
   "foundit.in", "internshala.com", "unstop.com", "google.com",
   "microsoft.com", "amazon.com", "flipkart.com", "infosys.com",
   "tcs.com", "wipro.com", "hcltech.com", "accenture.com",
+  "deloitte.com", "pwc.com", "kpmg.com", "ey.com",
+  "ibm.com", "oracle.com", "sap.com", "salesforce.com",
+  "capgemini.com", "cognizant.com", "hexaware.com", "mphasis.com",
+  "ltimindtree.com", "techmahindra.com",
 ]);
 
+function getRootDomain(domain: string): string {
+  // Strip subdomains: usijobs.deloitte.com → deloitte.com
+  const parts = domain.replace(/^www\./, "").split(".");
+  if (parts.length > 2) {
+    return parts.slice(-2).join(".");
+  }
+  return domain;
+}
+
 export function domainAgeSignal(data: ParsedJobPage): Signal {
-  const domain = data.companyDomain?.replace(/^www\./, "") ?? null;
+  const rawDomain = data.companyDomain?.replace(/^www\./, "") ?? null;
+  const domain = rawDomain ? getRootDomain(rawDomain) : null;
   const domainAgeDays = data.domainAgeDays;
 
-  // Known established domains — skip WHOIS, immediately low risk
   if (domain && ESTABLISHED_DOMAINS.has(domain)) {
     return {
       id: "domain_age",
@@ -24,7 +37,7 @@ export function domainAgeSignal(data: ParsedJobPage): Signal {
       confidence: 95,
       icon: "clock",
       explanation:
-        `"${domain}" is a well-known established domain with a long verified history.`,
+        `"${rawDomain}" belongs to a well-known established organization with a long verified history.`,
       whyItMatters:
         "Long-standing domains are significantly harder to fake. An established domain is a strong credibility signal.",
       advice: [
@@ -43,11 +56,11 @@ export function domainAgeSignal(data: ParsedJobPage): Signal {
       confidence: 35,
       icon: "clock",
       explanation:
-        "The domain registration age could not be determined automatically. This may be due to privacy protection on the WHOIS record.",
+        "The domain registration age could not be determined. This is often due to WHOIS privacy protection on the record.",
       whyItMatters:
-        "Established companies typically have domains registered for years. When age cannot be verified, manual checks are recommended.",
+        "Established companies typically have domains registered for years. When age cannot be verified automatically, a quick manual check is recommended.",
       advice: [
-        "Check the domain on https://whois.domaintools.com to see its registration date.",
+        `Check the domain on https://whois.domaintools.com/deloitte.com`,
         "Search the company name on LinkedIn and Crunchbase for founding date.",
         "A company claiming years of experience but with an unverifiable domain warrants extra scrutiny.",
       ],
@@ -92,11 +105,10 @@ export function domainAgeSignal(data: ParsedJobPage): Signal {
       explanation:
         `The domain is ${months} months old — less than a year. This could be a new but legitimate startup.`,
       whyItMatters:
-        "Domains under a year old carry more risk than established ones. New legitimate startups do exist, but extra verification is wise before sharing personal information.",
+        "Domains under a year old carry more risk than established ones. New legitimate startups do exist, but extra verification is wise.",
       advice: [
         "Verify the company exists through independent sources like LinkedIn or Crunchbase.",
         "Check for employee profiles on LinkedIn who list this company.",
-        "A young domain is not automatically suspicious — but verify before proceeding.",
       ],
     };
   }
@@ -113,7 +125,7 @@ export function domainAgeSignal(data: ParsedJobPage): Signal {
     explanation:
       `The domain has been registered for ${years} year${years !== 1 ? "s" : ""}, indicating an established company with a real online history.`,
     whyItMatters:
-      "Long-standing domains are harder and more costly to fake. An older domain is one of the strongest automated credibility signals available.",
+      "Long-standing domains are harder and more costly to fake. An older domain is one of the strongest automated credibility signals.",
     advice: [
       "Continue standard verification steps before sharing personal data.",
     ],
