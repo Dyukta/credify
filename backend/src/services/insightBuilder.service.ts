@@ -1,5 +1,5 @@
 import { RiskLevel, Signal } from "../types/Signal";
-import { AnalysisResult, ScoreDriver } from "../types/AnalysisResult";
+import { AnalysisResult} from "../types/AnalysisResult";
 import { ScoringResult } from "./scoring.service";
 
 const BASE_CHECKLIST = [
