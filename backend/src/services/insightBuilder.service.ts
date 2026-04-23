@@ -7,7 +7,7 @@ const BASE_CHECKLIST = [
   "Always apply through the company's official careers page or verified job board — not via WhatsApp, Telegram, or Google Forms.",
   "Verify the recruiter exists on LinkedIn and their email matches the company domain.",
   "Search the company name on MCA (mca.gov.in) for Indian companies, or LinkedIn for global ones.",
-  "If something feels off — trust that instinct and verify independently before proceeding.",
+  "If something feels off  trust that instinct and verify independently before proceeding.",
 ];
 
 function buildChecklist(signals: Signal[]): string[] {
