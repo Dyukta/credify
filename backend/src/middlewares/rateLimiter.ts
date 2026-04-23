@@ -10,7 +10,7 @@ export const rateLimiter = rateLimit({
     res.status(options.statusCode).json({
       status: options.statusCode,
       message: 'Too many requests. Please wait before trying again.',
-      code: 'RATE_LIMIT_EXCEEDED',
+      code: 'RATE_LIMIT_EXCEEDED'
     })
   },
 })

@@ -20,23 +20,23 @@ interface GhostThresholds {
 }
 
 const INDUSTRY_THRESHOLDS: Record<IndustryBucket, GhostThresholds> = {
-  tech:              { freshDays: 7,  activeDays: 21, mediumDays: 45 },
-  legal_finance:     { freshDays: 7,  activeDays: 30, mediumDays: 60 },
-  construction:      { freshDays: 14, activeDays: 45, mediumDays: 90 },
-  general:           { freshDays: 7,  activeDays: 30, mediumDays: 60 },
+  tech:  { freshDays: 7,  activeDays: 21, mediumDays: 45 },
+  legal_finance:{ freshDays: 7,  activeDays: 30, mediumDays: 60 },
+  construction: { freshDays: 14, activeDays: 45, mediumDays: 90 },
+  general:{ freshDays: 7,  activeDays: 30, mediumDays: 60 }
 };
 
 const TECH_PATTERNS = [
   /\b(engineer|developer|architect|programmer|devops|fullstack|frontend|backend|data\s+scientist|ml\s+engineer|sre|qa\s+engineer|cloud)\b/i,
-  /\b(software|react|node|python|java|golang|typescript|kubernetes|aws|gcp|azure)\b/i,
+  /\b(software|react|node|python|java|golang|typescript|kubernetes|aws|gcp|azure)\b/i
 ];
 
 const LEGAL_FINANCE_PATTERNS = [
-  /\b(lawyer|attorney|legal|counsel|compliance|auditor|chartered\s+accountant|ca\s+|cfa|analyst|investment|banker|finance\s+manager)\b/i,
+  /\b(lawyer|attorney|legal|counsel|compliance|auditor|chartered\s+accountant|ca\s+|cfa|analyst|investment|banker|finance\s+manager)\b/i
 ];
 
 const CONSTRUCTION_PATTERNS = [
-  /\b(civil|construction|site\s+engineer|project\s+manager|contractor|architect|surveyor|infrastructure|foreman)\b/i,
+  /\b(civil|construction|site\s+engineer|project\s+manager|contractor|architect|surveyor|infrastructure|foreman)\b/i
 ];
 
 function detectIndustry(title: string | null): IndustryBucket {
@@ -60,7 +60,7 @@ export function ghostJobSignal(data: ParsedJobPage): Signal {
       confidence: 45,
       icon: "history",
       explanation:
-        "No posting date was found. Ghost jobs — postings with no real intent to hire — are impossible to detect without a date.",
+        "No posting date was found. Ghost jobs  postings with no real intent to hire are impossible to detect without a date.",
       whyItMatters:
         "27% of online job listings in 2025 are estimated to be ghost jobs with no active hiring. Without a posting date, this risk cannot be assessed.",
       advice: [
@@ -101,7 +101,7 @@ export function ghostJobSignal(data: ParsedJobPage): Signal {
       category: "positive",
       title: "Fresh Job Posting",
       riskLevel: "low",
-      value: `Posted ${daysOld} day${daysOld !== 1 ? "s" : ""} ago`,
+      value: daysOld === 0 ? "Posted today" : `Posted ${daysOld} day${daysOld !== 1 ? "s" : ""} ago`,
       confidence: 82,
       icon: "history",
       explanation:
@@ -109,7 +109,7 @@ export function ghostJobSignal(data: ParsedJobPage): Signal {
       whyItMatters:
         "Early postings correlate strongly with genuine hiring need. Applying early also improves your chances before the applicant pool grows.",
       advice: [
-        "Apply promptly — fresh postings receive faster responses and smaller applicant pools.",
+        "Apply promptly fresh postings receive faster responses and smaller applicant pools.",
       ],
     };
   }

@@ -43,7 +43,9 @@ export default function Results() {
         <div className="banner banner-warning">
           <AlertTriangle size={15} />
           <span>
-            <strong>Limited access:</strong> This site restricted automated access only partial data was available. Some signals have reduced confidence. Manual verification is recommended.
+            <strong>Limited access:</strong> This site restricted automated
+            access — only partial data was available. Some signals have reduced
+            confidence. Manual verification is recommended.
           </span>
         </div>
       )}
@@ -71,8 +73,8 @@ export default function Results() {
           <div className="insight-header">
             <h2>Detailed Insights</h2>
             <p>
-              Each signal includes a measured value, explanation and actionable steps.
-              Expand for full details.
+              Each signal includes a measured value, explanation and actionable
+              steps. Expand for full details.
             </p>
           </div>
 

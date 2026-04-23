@@ -4,31 +4,28 @@ import { useAnalyzeStore } from "../../../store/analyzeStore";
 import { submitFeedback } from "../../../services/analyze.api";
 import type { Signal } from "../../../types/Signal";
 
-const CATEGORIES = ["red_flags","domain_company","domain_info","historical","positive","job_title"] as const;
+const CATEGORIES = ["red_flags","domain_company","historical","positive","job_title"] as const;
 type Category = (typeof CATEGORIES)[number];
+type GroupedSignals = Record<Category, Signal[]>;
 
 export function useResultsView() {
   const navigate = useNavigate();
   const { result, feedback, setFeedback, reset } = useAnalyzeStore();
 
-  const grouped = useMemo<Record<Category, Signal[]>>(() => {
-    const initial: Record<Category, Signal[]> = {
+  const grouped = useMemo<GroupedSignals>(() => {
+    const initial: GroupedSignals = {
       red_flags:[],
       domain_company:[],
-      domain_info:[],
       historical:[],
       positive: [],
-      job_title: []
+      job_title:[]
     };
 
     if (!result) return initial;
 
     result.signals.forEach((signal) => {
-      const key = signal.category as Category;
-      if (key in initial) {
-        initial[key].push(signal);
-      } else {
-        initial["domain_company"].push(signal);
+      if (signal.category in initial) {
+        initial[signal.category].push(signal);
       }
     });
 
@@ -42,15 +39,15 @@ export function useResultsView() {
 
       try {
         await submitFeedback({
-          url:       result.url,
-          domain:    result.domain,
-          riskScore: result.riskScore,
-          riskLevel: result.riskLevel,
+          url:result.url,
+          domain:result.domain,
+          riskScore:result.riskScore,
+          riskLevel:result.riskLevel,
           vote,
         });
       } catch { }
     },
-    [result, feedback, setFeedback]
+    [result, feedback, setFeedback],
   );
 
   return {

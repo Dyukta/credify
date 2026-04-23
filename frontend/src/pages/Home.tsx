@@ -26,8 +26,7 @@ export default function Home() {
 
   return (
     <>
-      {/* Full-width nav, outside the centered column */}
-      <nav className="results-nav">
+      <nav className="home-nav">
         <div className="nav-brand">
           <ShieldCheck size={18} />
           <span>Credify</span>

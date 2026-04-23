@@ -2,11 +2,21 @@ import axios from "axios";
 import { Signal } from "../types/Signal";
 import { ParsedJobPage } from "../services/parser.service";
 import { isKnownJobBoard } from "../utils/knownDomains";
+import { domainPresenceCache } from "../cache/memoryCache";
 
 const REQUEST_TIMEOUT_MS = 5000;
 
-async function checkWebPresence(domain: string): Promise<{ resolves: boolean; isJobBoard: boolean; statusCode: number | null }> {
-  const jobBoard = isKnownJobBoard(domain);
+async function checkWebPresence(domain: string): Promise<{
+  resolves: boolean;
+  isJobBoard: boolean;
+  statusCode: number | null;
+}> {
+  const isJobBoard = isKnownJobBoard(domain);
+  const cached = domainPresenceCache.get(domain);
+  if (cached !== null) {
+    return { ...cached, isJobBoard };
+  }
+
   try {
     const response = await axios.head(`https://${domain}`, {
       timeout: REQUEST_TIMEOUT_MS,
@@ -14,9 +24,13 @@ async function checkWebPresence(domain: string): Promise<{ resolves: boolean; is
       validateStatus: () => true,
       headers: { "User-Agent": "Mozilla/5.0 (compatible; Credify/1.0; +https://credify.app/bot)" },
     });
-    return { resolves: true, isJobBoard: jobBoard, statusCode: response.status };
+    const result = { resolves: true, statusCode: response.status };
+    domainPresenceCache.set(domain, result);
+    return { ...result, isJobBoard };
   } catch {
-    return { resolves: false, isJobBoard: jobBoard, statusCode: null };
+    const result = { resolves: false, statusCode: null };
+    domainPresenceCache.set(domain, result);
+    return { ...result, isJobBoard };
   }
 }
 
@@ -37,8 +51,8 @@ export async function companyRegistrationSignal(data: ParsedJobPage): Promise<Si
       advice: [
         "Search the company name on Google and verify their official website.",
         "Check for a LinkedIn company page with real employees.",
-        "Do not proceed without confirming the company exists independently.",
-      ],
+        "Do not proceed without confirming the company exists independently."
+      ]
     };
   }
 
@@ -59,8 +73,8 @@ export async function companyRegistrationSignal(data: ParsedJobPage): Promise<Si
         "Search the company name directly on Google to find their official website.",
         "Verify the company on LinkedIn — look for an active company page with real employees.",
         "Check for the role on the company's own careers page.",
-        "Look up the company on MCA (mca.gov.in) for Indian companies.",
-      ],
+        "Look up the company on MCA (mca.gov.in) for Indian companies."
+      ]
     };
   }
 
@@ -79,9 +93,8 @@ export async function companyRegistrationSignal(data: ParsedJobPage): Promise<Si
         "Search for the company name on LinkedIn to verify it exists independently.",
         "If the company claims to be established, a non-working website is a serious warning sign.",
         "Do not share personal documents with a company whose website is unreachable.",
-        "For Indian companies, verify on MCA portal: https://www.mca.gov.in",
-      ],
-      example: "Scam operations often register a domain but never build a working website.",
+        "For Indian companies, verify on MCA portal: https://www.mca.gov.in"
+      ]
     };
   }
 
@@ -99,8 +112,8 @@ export async function companyRegistrationSignal(data: ParsedJobPage): Promise<Si
       advice: [
         "Try visiting the website directly in your browser.",
         "Search for the company on LinkedIn and Glassdoor.",
-        "Look for recent news or press coverage of this company.",
-      ],
+        "Look for recent news or press coverage of this company."
+      ]
     };
   }
 
@@ -112,12 +125,12 @@ export async function companyRegistrationSignal(data: ParsedJobPage): Promise<Si
     value: `${domain} is live`,
     confidence: 80,
     icon: "building",
-    explanation: `The company website at "${domain}" is active and reachable — a positive credibility signal.`,
+    explanation: `The company website at "${domain}" is active and reachable a positive credibility signal.`,
     whyItMatters: "An active, reachable company website confirms the organization has a real web presence.",
     advice: [
       "Verify the website looks professional and matches what the job posting claims.",
       "Check the company's LinkedIn page for employee count and history.",
-      "Still perform standard due diligence before sharing sensitive personal information.",
-    ],
+      "Still perform standard due diligence before sharing sensitive personal information."
+    ]
   };
 }

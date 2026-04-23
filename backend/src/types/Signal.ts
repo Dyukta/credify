@@ -1,11 +1,6 @@
 export type RiskLevel = "low" | "medium" | "high";
 
-export type SignalCategory =
-  | "red_flags"
-  | "domain_company"
-  | "domain_info"
-  | "historical"
-  | "positive";
+export type SignalCategory = "red_flags" | "domain_company" | "domain_info" | "historical"| "positive";
 
 export interface Signal {
   id: string;

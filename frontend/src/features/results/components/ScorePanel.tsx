@@ -9,9 +9,9 @@ interface Props {
 }
 
 const RISK_LABEL: Record<RiskLevel, string> = {
-  high:   "High Risk",
-  medium: "Medium Risk",
-  low:    "Low Risk",
+  high:"High Risk",
+  medium:"Medium Risk",
+  low:"Low Risk"
 };
 
 export default function ScorePanel({ riskScore, riskLevel, scoreDrivers }: Props) {

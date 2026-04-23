@@ -13,10 +13,7 @@ class MemoryCache<T> {
   }
 
   set(key: string, value: T): void {
-    this.store.set(key, {
-      value,
-      expiresAt: Date.now() + this.ttlMs,
-    });
+    this.store.set(key, { value, expiresAt: Date.now() + this.ttlMs });
   }
 
   get(key: string): T | null {
@@ -50,8 +47,6 @@ class MemoryCache<T> {
 }
 
 export const urlCache = new MemoryCache<import("../types/AnalysisResult").AnalysisResult>(360);
-
-
 export const domainPresenceCache = new MemoryCache<{
   resolves: boolean;
   statusCode: number | null;

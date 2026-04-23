@@ -10,7 +10,7 @@ const CAREERS_PATHS = [
 ];
 
 const STOP_WORDS = new Set([
-  "and","or","the","a","an","of","in","at","for","to","with","on","is","are","be",
+  "and","or","the","a","an","of","in","at","for","to","with","on","is","are","be"
 ]);
 
 function getTitleKeywords(title: string): string[] {
@@ -21,26 +21,31 @@ function getTitleKeywords(title: string): string[] {
 }
 
 async function fetchCareersPageText(domain: string): Promise<string | null> {
-  for (const path of CAREERS_PATHS) {
-    try {
-      const res = await axios.get<string>(`https://${domain}${path}`, {
+  const attempts = CAREERS_PATHS.map((path) =>
+    axios
+      .get<string>(`https://${domain}${path}`, {
         timeout: TIMEOUT_MS,
         maxRedirects: 3,
         validateStatus: (s) => s < 400,
         responseType: "text",
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; Credify/1.0; +https://credify.app/bot)",
-          Accept: "text/html",
-        },
-      });
-      if (res.data && res.data.trim().length > 100) {
-        return res.data.toLowerCase().slice(0, 50_000);
-      }
-    } catch {
-      continue;
-    }
+          Accept: "text/html"
+        }
+      })
+      .then((res) => {
+        if (res.data && res.data.trim().length > 100) {
+          return res.data.toLowerCase().slice(0, 50_000);
+        }
+        return Promise.reject(new Error("empty"));
+      })
+  );
+
+  try {
+    return await Promise.any(attempts);
+  } catch {
+    return null;
   }
-  return null;
 }
 
 export async function crossPlatformVerifySignal(data: ParsedJobPage): Promise<Signal> {
@@ -75,7 +80,7 @@ export async function crossPlatformVerifySignal(data: ParsedJobPage): Promise<Si
       value: "Could not verify",
       confidence: 30,
       icon: "search",
-      explanation: "Company domain or job title could not be determined — cross-platform verification skipped.",
+      explanation: "Company domain or job title could not be determined platform verification skipped.",
       whyItMatters: "Verifying the role appears on the company's official careers page is one of the strongest legitimacy checks available.",
       advice: [
         "Manually search for the company's careers page and look for this role.",
@@ -105,7 +110,7 @@ export async function crossPlatformVerifySignal(data: ParsedJobPage): Promise<Si
     };
   }
 
-  const keywords = getTitleKeywords(data.jobTitle);
+  const keywords   = getTitleKeywords(data.jobTitle);
   const matchCount = keywords.filter((kw) => pageText.includes(kw)).length;
   const matchRatio = keywords.length > 0 ? matchCount / keywords.length : 0;
 
@@ -118,7 +123,7 @@ export async function crossPlatformVerifySignal(data: ParsedJobPage): Promise<Si
       value: "Role found on company careers page",
       confidence: 82,
       icon: "search",
-      explanation: `The job title matches content on ${rootDomain}'s careers page — strong evidence this is a real, actively listed role.`,
+      explanation: `The job title matches content on ${rootDomain}'s careers page strong evidence this is a real, actively listed role.`,
       whyItMatters: "A role appearing on both a job board and the company's own careers page is the strongest possible legitimacy signal.",
       advice: [
         "Visit the careers page directly to read the official posting.",

@@ -82,40 +82,8 @@ export function saveFeedback(
     db.prepare(`
       INSERT INTO feedback (url_hash, url, domain, risk_score, risk_level, vote)
       VALUES (@urlHash, @url, @domain, @riskScore, @riskLevel, @vote)
-    `).run({
-      urlHash:   hashUrl(url),
-      url,
-      domain,
-      riskScore,
-      riskLevel,
-      vote,
-    });
+    `).run({ urlHash: hashUrl(url), url, domain, riskScore, riskLevel, vote });
   } catch (err) {
     logger.warn({ err }, "saveFeedback failed — non-fatal");
-  }
-}
-
-export function getDomainStats(domain: string) {
-  try {
-    const row = db.prepare(`
-      SELECT
-        COUNT(*) as total,
-        AVG(risk_score) as avg_score,
-        SUM(CASE WHEN risk_level = 'high' THEN 1 ELSE 0 END) as high_risk,
-        MAX(analyzed_at) as last_seen
-      FROM analysis_results
-      WHERE domain = ?
-    `).get(domain) as Record<string, unknown> | undefined;
-
-    if (!row || !row.total) return null;
-
-    return {
-      totalAnalyses: row.total as number,
-      avgRiskScore:  Math.round((row.avg_score as number) ?? 0),
-      highRiskCount: row.high_risk as number,
-      lastSeen:      row.last_seen as string,
-    };
-  } catch {
-    return null;
   }
 }

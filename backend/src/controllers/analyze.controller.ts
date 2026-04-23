@@ -1,12 +1,21 @@
 import { Request, Response, NextFunction } from "express";
 import { randomUUID } from "crypto";
+import { z } from "zod";
 import { analyzeJobPosting } from "../services/analyze.service";
-import { saveFeedback, FeedbackVote } from "../db/analysisRepo";
+import { saveFeedback } from "../db/analysisRepo";
 import { AnalyzeRequestBody } from "../middlewares/validateRequest";
 import { AppError } from "../types/AppError";
 import pino from "pino";
 
 const logger = pino({ name: "analyze-controller" });
+
+const feedbackSchema = z.object({
+  url:z.string().url(),
+  domain:z.string().min(1),
+  riskScore:z.number().int().min(0).max(100),
+  riskLevel:z.enum(["low", "medium", "high"]),
+  vote:z.enum(["correct", "incorrect"])
+});
 
 export async function analyzeController(
   req: Request<object, object, AnalyzeRequestBody>,
@@ -42,18 +51,16 @@ export async function feedbackController(
   const reqLogger = logger.child({ requestId });
 
   try {
-    const { url, domain, riskScore, riskLevel, vote } = req.body as {
-      url: string;
-      domain: string;
-      riskScore: number;
-      riskLevel: string;
-      vote: FeedbackVote;
-    };
-
-    if (!url || !domain || !vote || !["correct", "incorrect"].includes(vote)) {
-      throw new AppError("Invalid feedback payload", 400, "INVALID_FEEDBACK");
+    const parsed = feedbackSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new AppError(
+        "Invalid feedback payload",
+        400,
+        "INVALID_FEEDBACK"
+      );
     }
 
+    const { url, domain, riskScore, riskLevel, vote } = parsed.data;
     saveFeedback(url, domain, riskScore, riskLevel, vote);
     reqLogger.info({ url, vote }, "feedback recorded");
 

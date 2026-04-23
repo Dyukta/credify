@@ -6,7 +6,6 @@ import axios from "axios";
 export function useAnalyze() {
   const navigate = useNavigate();
   const { url, status, setLoading, setResult, setError } = useAnalyzeStore();
-
   const analyze = async () => {
     const trimmed = url.trim();
     if (!trimmed) return;

@@ -14,17 +14,17 @@ export function errorHandler(
 
   if (err instanceof AppError) {
     logger.warn({
-      code:       err.code,
+      code:  err.code,
       statusCode: err.statusCode,
-      path:       req.path,
-      method:     req.method,
+      path: req.path,
+      method:  req.method,
       requestId,
     }, err.message);
 
     res.status(err.statusCode).json({
-      status:    err.statusCode,
-      message:   err.message,
-      code:      err.code,
+      status:  err.statusCode,
+      message:err.message,
+      code: err.code,
       requestId,
     });
     return;
@@ -33,16 +33,16 @@ export function errorHandler(
   const error = err instanceof Error ? err : new Error(String(err));
 
   logger.error({
-    err:    error,
-    path:   req.path,
-    method: req.method,
+    err:error,
+    path:req.path,
+    method:req.method,
     requestId,
   }, "Unhandled error");
 
   res.status(500).json({
-    status:    500,
-    message:   "An unexpected error occurred",
-    code:      "INTERNAL_SERVER_ERROR",
+    status: 500,
+    message: "An unexpected error occurred",
+    code: "INTERNAL_SERVER_ERROR",
     requestId,
   });
 }

@@ -1,19 +1,13 @@
-import "dotenv/config"; 
+import "dotenv/config";
 import pino from "pino";
 import app from "./app";
 
-
-
-// --- TEMP DEBUG: remove after confirming ---
-console.log("[env-check] GEMINI_API_KEY loaded:", !!process.env.GEMINI_API_KEY);
-console.log("[env-check] GEMINI_MODEL:", process.env.GEMINI_MODEL ?? "(not set, will use default)");
-// -------------------------------------------
 const logger = pino({
   name: "credify-server",
   level: process.env.LOG_LEVEL ?? "info",
   ...(process.env.NODE_ENV !== "production" && {
     transport: { target: "pino-pretty", options: { colorize: true } },
-  }),
+  })
 });
 
 const PORT = Number(process.env.PORT ?? 3001);

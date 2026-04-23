@@ -11,12 +11,12 @@ import pino from "pino";
 
 const logger = pino({ name: "signals-index" });
 const TECHNICAL_SIGNALS: Array<{ id: string; fn: (data: ParsedJobPage) => Signal | Promise<Signal> }> = [
-  { id: "domain_age",            fn: domainAgeSignal            },
-  { id: "careers_page",          fn: careersPageSignal          },
-  { id: "company_registration",  fn: companyRegistrationSignal  },
-  { id: "ghost_job",             fn: ghostJobSignal             },
-  { id: "cross_platform_verify", fn: crossPlatformVerifySignal  },
-  { id: "repost_frequency",      fn: repostFrequencySignal      },
+  { id: "domain_age",  fn: domainAgeSignal  },
+  { id: "careers_page", fn: careersPageSignal },
+  { id: "company_registration", fn: companyRegistrationSignal },
+  { id: "ghost_job", fn: ghostJobSignal  },
+  { id: "cross_platform_verify",fn: crossPlatformVerifySignal},
+  { id: "repost_frequency", fn: repostFrequencySignal}
 ];
 
 function makeFallback(id: string): Signal {

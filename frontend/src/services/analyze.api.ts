@@ -3,7 +3,7 @@ import type { AnalysisResult } from "../types/AnalysisResult";
 
 const api = axios.create({
   baseURL: "/api",
-  headers: { "Content-Type": "application/json" },
+  headers: { "Content-Type": "application/json" }
 });
 
 export const analyzeUrl = async (url: string): Promise<AnalysisResult> => {

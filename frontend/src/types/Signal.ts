@@ -1,5 +1,7 @@
 import type { RiskLevel } from "./RiskLevel";
 
+export type { RiskLevel };
+
 export interface Signal {
   id: string;
   title: string;
@@ -7,7 +9,7 @@ export interface Signal {
   whyItMatters?: string;
   riskLevel: RiskLevel;
   confidence: number;
-  category: "red_flags" | "domain_company" | "domain_info" | "historical" | "positive" | "job_title";  
+  category: "red_flags" | "domain_company" | "historical" | "positive" | "job_title";
   value?: string;
   advice?: string[];
   example?: string;

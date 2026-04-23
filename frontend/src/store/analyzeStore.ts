@@ -26,10 +26,10 @@ export const useAnalyzeStore = create<AnalyzeStore>((set) => ({
   error:    null,
   feedback: null,
 
-  setUrl:      (url)      => set({ url }),
-  setLoading:  ()         => set({ status: "loading", error: null, result: null, feedback: null }),
-  setResult:   (result)   => set({ status: "success", result, error: null }),
-  setError:    (error)    => set({ status: "error", error }),
-  setFeedback: (feedback) => set({ feedback }),
-  reset:       ()         => set({ url: "", status: "idle", result: null, error: null, feedback: null }),
+  setUrl: (url) => set({ url }),
+  setLoading:() => set({ status: "loading", error: null, result: null, feedback: null }),
+  setResult:(result)=> set({ status: "success", result, error: null }),
+  setError:(error)=> set({ status: "error", error }),
+  setFeedback:(feedback) => set({ feedback }),
+  reset:() => set({ url: "", status: "idle", result: null, error: null, feedback: null })
 }));

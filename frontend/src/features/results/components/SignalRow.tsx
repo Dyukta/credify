@@ -9,16 +9,16 @@ interface Props {
 }
 
 const signalIcon: Record<string, React.ComponentType<{ size?: number }>> = {
-  email:    Mail,
-  document: FileText,
-  clock:    Clock,
-  globe:    Globe,
-  star:     Star,
-  history:  History,
+  email: Mail,
+  document:FileText,
+  clock:  Clock,
+  globe: Globe,
+  star: Star,
+  history: History,
   building: Building,
   briefcase: Briefcase,
-  alert:    AlertTriangle,
-  search:   Search,
+  alert:AlertTriangle,
+  search: Search,
   currency: DollarSign
 };
 

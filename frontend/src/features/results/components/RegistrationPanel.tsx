@@ -67,7 +67,7 @@ export default function RegistrationPanel({ signal }: Props) {
 
       <p className="registration-notice">
         Data sourced from Ministry of Corporate Affairs public records. Results
-        are indicative only — verify directly on the{" "}
+        are indicative only verify directly on the{" "}
         <a href="https://www.mca.gov.in" target="_blank" rel="noopener noreferrer">
           MCA portal
         </a>{" "}
