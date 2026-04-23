@@ -44,7 +44,7 @@ export default function Results() {
           <AlertTriangle size={15} />
           <span>
             <strong>Limited access:</strong> This site restricted automated
-            access — only partial data was available. Some signals have reduced
+            access only partial data was available. Some signals have reduced
             confidence. Manual verification is recommended.
           </span>
         </div>
