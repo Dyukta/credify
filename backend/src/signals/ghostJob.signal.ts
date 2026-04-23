@@ -141,7 +141,7 @@ export function ghostJobSignal(data: ParsedJobPage): Signal {
       confidence: 65,
       icon: "history",
       explanation:
-        `This posting is ${daysOld} days old — past the typical active window${industryLabel} of ${thresholds.activeDays} days.`,
+        `This posting is ${daysOld} days old  past the typical active window${industryLabel} of ${thresholds.activeDays} days.`,
       whyItMatters:
         "Industry data shows most active roles are filled within their typical window. A posting in this range warrants a quick check before investing time in an application.",
       advice: [
@@ -169,7 +169,5 @@ export function ghostJobSignal(data: ParsedJobPage): Signal {
       "Search 'company name + layoffs' or 'hiring freeze' to check if they are actually recruiting.",
       "Do not invest significant time without first confirming the role is active.",
     ],
-    example:
-      "40% of companies admit to posting ghost jobs. 79% of fake tech listings were still active when researchers checked months later.",
   };
 }

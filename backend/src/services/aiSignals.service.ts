@@ -95,7 +95,7 @@ function buildPrompt(data: ParsedJobPage): string {
   const desc = (data.jobDescription ?? "").slice(0, 2500);
   const contactHints = data.rawContactMentions ?? "none found";
 
-  return `You are a job scam detection engine. Analyze this job posting and return ONLY a valid JSON object — no markdown, no explanation, no preamble.
+  return `You are a job scam detection engine. Analyze this job posting and return ONLY a valid JSON object no markdown, no explanation, no preamble.
 
 JOB DATA:
 Title: ${data.jobTitle ?? "not found"}
@@ -136,9 +136,9 @@ EVALUATE EXACTLY THESE 6 SIGNALS. For each return riskLevel ("low"|"medium"|"hig
    LOW: Compensation aligns with market rate or no red flags in expectations.
 
 6. inconsistency_check
-   HIGH: Clear contradictions — title says senior but description says freshers welcome; company name doesn't relate to domain; role duties don't match title; formatting suggests copy-paste from multiple sources.
+   HIGH: Clear contradictions title says senior but description says freshers welcome. company name doesn't relate to domain. role duties don't match title. formatting suggests copy paste from multiple sources.
    MEDIUM: Minor inconsistencies or missing context makes role hard to evaluate coherently.
-   LOW: Title, description, company, and requirements are internally consistent.
+   LOW: Title, description, company and requirements are internally consistent.
 
 RETURN EXACTLY THIS JSON STRUCTURE:
 {
@@ -210,6 +210,34 @@ const RISK_VALUE: Record<RiskLevel, string> = {
   high: "Red flag detected",
 };
 
+async function generateWithRetry(
+  model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>,
+  prompt: string,
+  maxRetries = 2
+): Promise<string> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (err: unknown) {
+      const isQuota =
+        typeof err === "object" &&
+        err !== null &&
+        "status" in err &&
+        (err as { status: number }).status === 429;
+
+      if (isQuota && attempt < maxRetries) {
+        const waitMs = 4000 * (attempt + 1);
+        logger.warn({ attempt, waitMs }, "Gemini 429 — retrying after delay");
+        await new Promise((res) => setTimeout(res, waitMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Unreachable");
+}
+
 export async function runAISignals(data: ParsedJobPage): Promise<Signal[]> {
   try {
     const genAI = getGeminiClient();
@@ -217,8 +245,7 @@ export async function runAISignals(data: ParsedJobPage): Promise<Signal[]> {
       model: process.env.GEMINI_MODEL ?? "gemini-2.0-flash",
     });
 
-    const result = await model.generateContent(buildPrompt(data));
-    const rawText = result.response.text();
+    const rawText = await generateWithRetry(model, buildPrompt(data));
     const parsed = parseGeminiResponse(rawText);
 
     if (!parsed) {

@@ -7,19 +7,16 @@ import pino from "pino";
 const logger = pino({ name: "scoring-service" });
 
 export const SIGNAL_WEIGHTS: Record<string, number> = {
-  instant_offer_pattern:    0.18,
-  ghost_job:                0.15,
-  careers_page:             0.13,
-  domain_age:               0.12,
-  description_vagueness:    0.10,
-  upfront_payment_language: 0.10,
-  cross_platform_verify:    0.08,
-  communication_channel:    0.07,
-  offer_realism:            0.05,
-  inconsistency_check:      0.02
+  ghost_job:             0.22,
+  careers_page:          0.20,
+  domain_age:            0.18,
+  cross_platform_verify: 0.15,
+  description_vagueness: 0.13,
+  offer_realism:         0.08,
+  repost_frequency:      0.04,
 };
 
-export const DEFAULT_WEIGHT = 0.02;
+export const DEFAULT_WEIGHT = 0.04;
 
 export const RISK_SCORE_MAP: Record<RiskLevel, number> = {
   low:    10,

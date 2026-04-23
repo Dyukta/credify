@@ -16,19 +16,24 @@ const axiosInstance = axios.create({
     "Sec-Fetch-Mode": "navigate",
     "Sec-Fetch-Site": "none",
     "Upgrade-Insecure-Requests": "1",
-    "Cache-Control": "max-age=0"
+    "Cache-Control": "max-age=0",
   },
 });
 
-const FETCH_TIMEOUT_MS = 8000;
+const FETCH_TIMEOUT_MS = 8_000;
 
-export async function fetchJobPage(sanitizedHref: string): Promise<string> {
+export async function fetchJobPage(
+  sanitizedHref: string,
+  externalSignal?: AbortSignal
+): Promise<string> {
   const hostname = new URL(sanitizedHref).hostname;
   await ssrfGuard(hostname);
 
   const isKnownPlatform = isKnownJobPlatform(hostname);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  externalSignal?.addEventListener("abort", () => controller.abort(), { once: true });
 
   try {
     const response = await axiosInstance.get<string>(sanitizedHref, {

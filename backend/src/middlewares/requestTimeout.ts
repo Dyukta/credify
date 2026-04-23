@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
-const TIMEOUT_MS = 10_000;
+const TIMEOUT_MS = 35_000;
 
 export function requestTimeout(
   _req: Request,

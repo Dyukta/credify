@@ -43,9 +43,7 @@ export default function Results() {
         <div className="banner banner-warning">
           <AlertTriangle size={15} />
           <span>
-            <strong>Limited access:</strong> This site restricted automated access — only partial data
-            was available. Some signals have reduced confidence. Manual verification is especially
-            recommended.
+            <strong>Limited access:</strong> This site restricted automated access only partial data was available. Some signals have reduced confidence. Manual verification is recommended.
           </span>
         </div>
       )}

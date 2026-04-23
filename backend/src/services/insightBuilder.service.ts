@@ -16,21 +16,6 @@ function buildChecklist(signals: Signal[]): string[] {
 
   for (const s of highSignals) {
     switch (s.id) {
-      case "upfront_payment_language":
-        checklist.push(
-          "Do not pay any fee for training, registration, equipment, or background checks — legitimate employers never charge candidates."
-        );
-        break;
-      case "communication_channel":
-        checklist.push(
-          "Only communicate through official company email addresses or the platform you found the job on. Refuse to move to WhatsApp or Telegram."
-        );
-        break;
-      case "instant_offer_pattern":
-        checklist.push(
-          "Demand a proper interview process before accepting any offer. No legitimate company in 2026 hires without assessment."
-        );
-        break;
       case "domain_age":
         checklist.push(
           "Independently verify this company exists — search for news coverage, LinkedIn employees, and check WHOIS at whois.domaintools.com."

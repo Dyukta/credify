@@ -7,8 +7,11 @@ import { sanitizeUrl } from "../utils/sanitizeUrl";
 import { urlCache } from "../cache/memoryCache";
 import { saveAnalysis, getAnalysisByUrl } from "../db/analysisRepo";
 
-export async function analyzeJobPosting(rawUrl: string): Promise<AnalysisResult> {
-  const sanitized    = sanitizeUrl(rawUrl);
+export async function analyzeJobPosting(
+  rawUrl: string,
+  abortSignal?: AbortSignal
+): Promise<AnalysisResult> {
+  const sanitized = sanitizeUrl(rawUrl);
   const normalizedUrl = sanitized.href;
 
   const memCached = urlCache.get(normalizedUrl);
@@ -20,7 +23,7 @@ export async function analyzeJobPosting(rawUrl: string): Promise<AnalysisResult>
     return dbCached;
   }
 
-  const html          = await fetchJobPage(normalizedUrl);
+  const html          = await fetchJobPage(normalizedUrl, abortSignal);
   const parsed        = await parseJobPage(html, normalizedUrl);
   const scoringResult = await scoreSignals(parsed);
   const riskLevel     = resolveRiskLevel(scoringResult.riskScore);
@@ -31,7 +34,7 @@ export async function analyzeJobPosting(rawUrl: string): Promise<AnalysisResult>
     domain,
     scoringResult,
     riskLevel,
-    isPartialData: parsed.isPartialData
+    isPartialData: parsed.isPartialData,
   });
 
   urlCache.set(normalizedUrl, result);

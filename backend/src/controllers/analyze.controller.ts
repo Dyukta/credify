@@ -20,10 +20,13 @@ export async function analyzeController(
     const { url } = req.body;
     reqLogger.info({ url }, "analyze request received");
 
-    const result = await analyzeJobPosting(url);
+    const abortSignal = (res.locals.abortController as AbortController | undefined)?.signal;
+    const result = await analyzeJobPosting(url, abortSignal);
 
+    if (res.headersSent) return;
     res.status(200).json({ ...result, requestId });
   } catch (error) {
+    if (res.headersSent) return;
     reqLogger.warn({ error }, "analyze request failed");
     res.locals.requestId = requestId;
     next(error);
